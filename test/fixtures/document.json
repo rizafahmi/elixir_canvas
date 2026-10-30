@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "idea",
+      "type": "shape",
+      "x": 0,
+      "y": 0,
+      "width": 240,
+      "height": 140,
+      "data": {
+        "kind": "rect",
+        "text": "Start with an idea",
+        "fill": "yellow",
+        "stroke": "ink",
+        "width": 2,
+        "radius": 8,
+        "size": "m",
+        "align": "center"
+      }
+    },
+    {
+      "id": "make",
+      "type": "shape",
+      "x": 400,
+      "y": 0,
+      "width": 240,
+      "height": 140,
+      "data": {
+        "kind": "rect",
+        "text": "Make room for the next one",
+        "fill": "blue",
+        "stroke": "ink",
+        "width": 2,
+        "radius": 8,
+        "size": "m",
+        "align": "center"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "idea-to-make",
+      "source": "idea",
+      "source_handle": "right",
+      "target": "make",
+      "target_handle": "left",
+      "path": "bezier",
+      "marker": "arrow"
+    }
+  ]
+}

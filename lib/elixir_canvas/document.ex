@@ -4,6 +4,8 @@ defmodule ElixirCanvas.Document do
 
   Hakushi owns graph operations; this module owns the portable file contract.
   Unknown fields are retained when supported objects are edited and saved.
+  Appearance metadata is optional; omitted fonts retain sans-serif rendering.
+  Newly created canvases explicitly select handwritten rendering.
   """
 
   alias Hakushi.Graph
@@ -52,6 +54,9 @@ defmodule ElixirCanvas.Document do
     |> Kernel.<>("\n")
   end
 
+  def drawing_font(%__MODULE__{source: %{"appearance" => %{"font" => font}}}), do: font
+  def drawing_font(%__MODULE__{}), do: "sans"
+
   def status(%__MODULE__{path: path, revision: revision}) do
     case read_regular(path) do
       {:ok, bytes} -> if digest(bytes) == revision, do: :unchanged, else: :changed
@@ -75,7 +80,13 @@ defmodule ElixirCanvas.Document do
   def create(path) do
     path = Path.expand(path)
     graph = Graph.new()
-    document = %__MODULE__{path: path, graph: graph}
+
+    document = %__MODULE__{
+      path: path,
+      graph: graph,
+      source: %{"appearance" => %{"font" => "handwritten"}}
+    }
+
     bytes = encode(document, graph)
 
     case File.write(path, bytes, [:exclusive, :sync]) do
@@ -154,7 +165,8 @@ defmodule ElixirCanvas.Document do
        when is_list(nodes) and is_list(edges) do
     with :ok <- validate_each(nodes, &validate_node/1),
          :ok <- validate_each(edges, &validate_edge/1),
-         :ok <- validate_paper(source["paper"]) do
+         :ok <- validate_paper(source["paper"]),
+         :ok <- validate_appearance(Map.fetch(source, "appearance")) do
       :ok
     end
   end
@@ -257,6 +269,19 @@ defmodule ElixirCanvas.Document do
 
   defp validate_edge(_edge),
     do: {:error, "Each connector needs stable string id, source, and target fields."}
+
+  defp validate_appearance(:error), do: :ok
+
+  defp validate_appearance({:ok, %{} = appearance}) do
+    if not Map.has_key?(appearance, "font") or appearance["font"] in ~w(sans handwritten) do
+      :ok
+    else
+      {:error, "Appearance font must be sans or handwritten."}
+    end
+  end
+
+  defp validate_appearance({:ok, _appearance}),
+    do: {:error, "Appearance must be an object."}
 
   defp validate_paper(nil), do: :ok
 

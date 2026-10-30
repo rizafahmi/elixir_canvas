@@ -8,7 +8,7 @@ defmodule ElixirCanvas.DocumentTest do
 
   setup %{tmp_dir: directory} do
     path = Path.join(directory, "ideas.json")
-    File.cp!("examples/welcome.json", path)
+    File.cp!(Path.expand("../fixtures/document.json", __DIR__), path)
     {:ok, document} = Document.open(path)
     %{path: path, document: document}
   end
@@ -117,6 +117,101 @@ defmodule ElixirCanvas.DocumentTest do
     assert {:ok, blank} = Document.create(Path.join(directory, "blank.json"))
     assert blank.graph.nodes == %{}
     assert blank.graph.edges == %{}
+  end
+
+  test "legacy documents keep their implicit sans font after an unrelated save", %{
+    path: path
+  } do
+    source = path |> File.read!() |> Jason.decode!() |> Map.delete("appearance")
+    File.write!(path, Jason.encode!(source))
+    {:ok, document} = Document.open(path)
+
+    assert Document.drawing_font(document) == "sans"
+    refute Map.has_key?(document.source, "appearance")
+
+    {:ok, graph, _, _} =
+      Graph.apply(document.graph, Change.move([%{id: "idea", x: 125, y: 80}]))
+
+    {:ok, saved} = Document.save(document, graph)
+    {:ok, reopened} = Document.open(path)
+    assert Document.drawing_font(saved) == "sans"
+    assert Document.drawing_font(reopened) == "sans"
+    refute Map.has_key?(saved.source, "appearance")
+    refute Map.has_key?(reopened.source, "appearance")
+    refute Map.has_key?(Jason.decode!(File.read!(path)), "appearance")
+    assert Graph.node(reopened.graph, "idea").x == 125
+  end
+
+  test "new documents persist handwritten appearance through saving and reopening", %{
+    tmp_dir: directory
+  } do
+    path = Path.join(directory, "handwritten.json")
+    {:ok, document} = Document.create(path)
+
+    assert Document.drawing_font(document) == "handwritten"
+    assert document.source["appearance"] == %{"font" => "handwritten"}
+    assert Jason.decode!(File.read!(path))["appearance"] == %{"font" => "handwritten"}
+
+    {:ok, saved} = Document.save(document, document.graph)
+    {:ok, reopened} = Document.open(path)
+    assert Document.drawing_font(saved) == "handwritten"
+    assert Document.drawing_font(reopened) == "handwritten"
+    assert reopened.source["appearance"] == %{"font" => "handwritten"}
+    assert reopened.source["version"] == 1
+  end
+
+  test "appearance objects and unknown metadata survive unrelated graph edits", %{path: path} do
+    original = path |> File.read!() |> Jason.decode!()
+
+    for appearance <- [
+          %{},
+          %{"font" => "sans"},
+          %{"font" => "handwritten"},
+          %{"future" => %{"palette" => ["ink", "blue"], "enabled" => true}},
+          %{"font" => "handwritten", "future" => %{"custom" => nil}}
+        ] do
+      source = Map.put(original, "appearance", appearance)
+      File.write!(path, Jason.encode!(source))
+      {:ok, document} = Document.open(path)
+      assert Document.drawing_font(document) == Map.get(appearance, "font", "sans")
+
+      {:ok, graph, _, _} =
+        Graph.apply(document.graph, Change.move([%{id: "idea", x: 150, y: 90}]))
+
+      {:ok, saved} = Document.save(document, graph)
+      {:ok, reopened} = Document.open(path)
+      assert saved.source["appearance"] == appearance
+      assert reopened.source["appearance"] == appearance
+      assert Document.drawing_font(reopened) == Map.get(appearance, "font", "sans")
+      assert Jason.decode!(File.read!(path))["appearance"] == appearance
+      assert Graph.node(reopened.graph, "idea").x == 150
+    end
+  end
+
+  test "invalid appearance objects and font values are rejected without rewriting", %{path: path} do
+    original = path |> File.read!() |> Jason.decode!()
+
+    for appearance <- [
+          nil,
+          [],
+          "handwritten",
+          1,
+          false,
+          %{"font" => nil},
+          %{"font" => ""},
+          %{"font" => "serif"},
+          %{"font" => "Sans"},
+          %{"font" => 1},
+          %{"font" => true},
+          %{"font" => []},
+          %{"font" => %{}}
+        ] do
+      bytes = original |> Map.put("appearance", appearance) |> Jason.encode!()
+      File.write!(path, bytes)
+      assert {:error, reason} = Document.open(path)
+      assert reason =~ "Appearance"
+      assert File.read!(path) == bytes
+    end
   end
 
   test "moving a document requires no app-specific database", %{path: path, tmp_dir: directory} do

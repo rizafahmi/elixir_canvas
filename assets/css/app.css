@@ -1,84 +1,200 @@
 @import "../../deps/hakushi/priv/static/hakushi.css";
 
+@font-face {
+  font-family: "Amatic SC";
+  src: url("/fonts/amatic-sc/AmaticSC-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Roboto Mono";
+  src: url("/fonts/roboto-mono/RobotoMono.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+}
+
 :root {
   color-scheme: light;
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  color: #302f2b;
-  background: #faf9f6;
+  color: #171719;
+  background: #fff;
   --hakushi-font: "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  --hakushi-text: #302f2b;
-  --hakushi-muted: #858278;
-  --hakushi-background: #faf9f6;
-  --hakushi-pattern: #e7e4dc;
-  --hakushi-pattern-strong: #d9d5ca;
-  --hakushi-surface: #fffefa;
-  --hakushi-border: #e1ddd4;
-  --hakushi-accent: #bb603d;
+  --hakushi-font-size: 12px;
+  --hakushi-text: #171719;
+  --hakushi-muted: #717178;
+  --hakushi-background: #fff;
+  --hakushi-pattern: #f1f1f4;
+  --hakushi-pattern-strong: #e2e2e8;
+  --hakushi-surface: #fff;
+  --hakushi-border: #e5e5ea;
+  --hakushi-accent: #5550d8;
   --hakushi-accent-text: #fff;
-  --hakushi-edge: #79766e;
-  --hakushi-shape-ink: #45423a;
-  --hakushi-shape-yellow: #d5ae48;
-  --hakushi-shape-blue: #779ab1;
-  --hakushi-shape-green: #7c9b7b;
-  --hakushi-shape-tint: 22%;
-  --hakushi-control-shadow: 0 2px 12px #302f2b09, 0 0 0 1px #e1ddd4;
+  --hakushi-selection: #5550d8;
+  --hakushi-edge-selected: #5550d8;
+  --hakushi-guide: #5550d8;
+  --hakushi-box: #5550d814;
+  --hakushi-node-background: #fff;
+  --hakushi-node-border: #e5e5ea;
+  --hakushi-node-radius: 0;
+  --hakushi-node-shadow: none;
+  --hakushi-handle: #fff;
+  --hakushi-handle-border: #5550d8;
+  --hakushi-handle-size: 7px;
+  --hakushi-edge: #303036;
+  --hakushi-edge-width: 2px;
+  --hakushi-edge-label: #fff;
+  --hakushi-control: #fff;
+  --hakushi-control-shadow: 0 3px 18px #16162508, 0 0 0 1px #1616250d;
+  --hakushi-shape-ink: #171719;
+  --hakushi-shape-gray: #8b8d98;
+  --hakushi-shape-blue: #3e63dd;
+  --hakushi-shape-green: #30a46c;
+  --hakushi-shape-yellow: #d5a21a;
+  --hakushi-shape-red: #e5484d;
+  --hakushi-shape-violet: #8e4ec6;
+  --hakushi-shape-tint: 16%;
+  --canvas-text-font: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  --canvas-text-weight: 450;
+  --canvas-text-weight-large: 500;
+  --canvas-text-small: 13px;
+  --canvas-text-medium: 16px;
+  --canvas-text-large: 24px;
+  --canvas-text-leading: 1.3;
+  --canvas-text-tracking: -.2px;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; }
-button, input { font: inherit; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { opacity: .4; cursor: default; }
-button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid #bb603d; outline-offset: 3px; }
-#workspace { display: flex; flex-direction: column; height: 100dvh; min-height: 420px; }
-.topbar { display: flex; align-items: center; gap: 32px; padding: 16px 24px; min-height: 84px; background: #fffefa; border-bottom: 1px solid #e8e5dc; }
-.wordmark { color: inherit; text-decoration: none; font-size: 30px; letter-spacing: -1.8px; font-weight: 650; }
-.wordmark-dot { color: #bb603d; }
-.document-heading { display: grid; gap: 4px; min-width: 0; }
-.document-heading strong { font-size: 14px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.document-state { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #858278; }
-.status-dot { width: 5px; height: 5px; border-radius: 50%; background: #82937b; }
-.status-dot.unsaved { background: #bb603d; }
-.header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.local-label { color: #918d82; font-size: 11px; margin-right: 16px; }
-.topbar button, .filebar button { border: 1px solid #e1ddd4; border-radius: 7px; padding: 7px 12px; background: #fffefa; color: #514d44; font-size: 12px; white-space: nowrap; }
-.topbar button:hover, .filebar button:hover { background: #f0ede6; }
-.topbar .primary { background: #302f2b; color: #fffefa; border-color: #302f2b; }
-.topbar .primary:hover { background: #49463e; }
-kbd { font-family: inherit; font-size: 10px; opacity: .6; margin-left: 10px; }
-.filebar { display: flex; align-items: center; gap: 14px; padding: 10px 24px; border-bottom: 1px solid #e8e5dc; background: #f5f3ed; }
-.file-label { font-size: 9px; letter-spacing: 1.5px; color: #8b867a; white-space: nowrap; }
-.filebar form { display: flex; gap: 8px; align-items: center; min-width: 0; }
-#open-file-form { flex: 1; }
-#create-file-form { flex: .7; border-left: 1px solid #ddd8ce; padding-left: 14px; }
-.filebar input { width: 100%; min-width: 0; padding: 7px 8px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #6d675c; font: 11px ui-monospace, "SFMono-Regular", monospace; }
-.filebar input:hover, .filebar input:focus { background: #fffefa; border-color: #e1ddd4; }
-.filebar input::placeholder { color: #9c968a; }
-.message { padding: 10px 24px; font-size: 12px; line-height: 1.5; }
-.error { color: #8d362e; background: #fbeee9; border-bottom: 1px solid #efd7cf; }
-.warning { color: #7c5a28; background: #fbf3db; border-bottom: 1px solid #eaddbc; }
-.canvas-area { position: relative; flex: 1; min-height: 0; }
+:is(button, input, select, a):focus-visible { outline: 2px solid #5550d8; outline-offset: 3px; }
+.canvas-workspace { position: relative; isolation: isolate; width: 100%; height: 100dvh; overflow: hidden; background: #fff; font: 12px/1.5 "Avenir Next", Avenir, "Segoe UI", sans-serif; }
+.canvas-area { position: absolute; inset: 0; min-width: 0; min-height: 0; }
 .drawing-board { height: 100%; min-height: 0; }
-.canvas-caption { position: absolute; right: 28px; bottom: 22px; color: #a19b8e; font-size: 12px; font-style: italic; pointer-events: none; }
-.hakushi-tools { top: 24px; padding: 7px; gap: 4px; border-radius: 12px; }
-.hakushi-controls { bottom: 20px; left: 24px; border-radius: 9px; }
-.hakushi-shape-text { font-weight: 450; letter-spacing: -.2px; }
-.hakushi-style-panel { top: 84px; left: 24px; border-radius: 10px; }
-.statusbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 24px; border-top: 1px solid #e8e5dc; color: #928c80; font-size: 10px; background: #fffefa; }
-.separator { color: #cbc6ba; margin: 0 6px; }
-.interaction-hint { text-align: center; }
-.empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; text-align: center; }
-.empty-state h1 { font-size: 30px; font-weight: 450; letter-spacing: -1px; }
-.empty-state p { color: #858278; font-size: 14px; }
+.canvas-workspace:not([data-font-state="ready"]) .drawing-board { opacity: 0; pointer-events: none; }
+
+/* Floating islands leave the paper uninterrupted, even when no file is open. */
+.canvas-header { position: absolute; inset: 18px 20px auto; z-index: 10; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; pointer-events: none; }
+.document-identity { min-width: 0; max-width: min(48vw, 420px); pointer-events: auto; }
+.document-toggle { display: flex; align-items: center; gap: 10px; max-width: 100%; padding: 10px 12px; border: 1px solid #eaeaf0; border-radius: 10px; background: #ffffffed; color: inherit; box-shadow: 0 3px 18px #16162505; }
+.document-toggle:hover { background: #f8f8fb; }
+.document-toggle[aria-expanded="true"] { border-color: #bcb9ef; }
+.document-toggle svg { width: 15px; height: 15px; flex: none; }
+.document-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+.document-status { display: flex; align-items: center; gap: 6px; margin: 7px 12px 0; color: #717178; font-size: 10px; }
+.status-dot { flex: none; width: 5px; height: 5px; border-radius: 50%; background: #85858d; }
+.status-dot.unsaved, .unsaved .status-dot { background: #5550d8; }
+.status-dot.conflict, .conflict .status-dot { background: #b7761b; }
+.canvas-actions { display: flex; gap: 8px; flex: none; pointer-events: auto; }
+.save-button, .style-button, .menu-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 8px 12px; border: 1px solid #e5e5ea; border-radius: 8px; background: #fff; color: #242429; font-size: 11px; white-space: nowrap; }
+.save-button { background: #202025; color: #fff; border-color: #202025; }
+.save-button:hover { background: #39393f; }
+.style-button:hover, .menu-button:hover { background: #f5f5f9; }
+.style-button[aria-pressed="true"] { border-color: #c4c1f0; color: #4943c1; background: #f0effc; }
+.canvas-actions svg { width: 14px; height: 14px; }
+kbd { padding: 1px 4px; border: 1px solid currentColor; border-radius: 3px; font: 9px "Roboto Mono", monospace; opacity: .6; }
+
+.file-menu { position: absolute; top: 83px; left: 20px; z-index: 12; width: min(354px, calc(100% - 40px)); max-height: calc(100dvh - 105px); overflow-y: auto; overscroll-behavior: contain; padding: 20px; border: 1px solid #e5e5ea; border-radius: 12px; background: #fff; box-shadow: 0 12px 42px #16162512; }
+.menu-heading { margin: 0 0 8px; color: #202025; font-size: 13px; font-weight: 600; }
+.file-location { margin: 0; color: #717178; font-size: 10px; overflow-wrap: anywhere; }
+.menu-section { margin-top: 18px; padding-top: 18px; border-top: 1px solid #efeff3; }
+.file-form { display: grid; gap: 8px; margin: 0 0 16px; }
+.field-label { display: block; margin-bottom: 5px; color: #686870; font-size: 10px; }
+.file-form .field-label { margin-bottom: 0; }
+.file-menu :is(input, select) { width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid #dddde5; border-radius: 6px; background: #fff; color: #29292f; font-size: 11px; }
+.file-menu input::placeholder { color: #909099; }
+.file-input-row { display: flex; gap: 8px; min-width: 0; }
+.file-input-row input { flex: 1; font-family: "Roboto Mono", monospace; }
+.file-input-row .menu-button { flex: none; }
+.reload-button { margin-top: 14px; }
+.file-form .menu-button { justify-self: start; }
+.shortcut-list { display: grid; gap: 8px; margin: 18px 0 0; padding-top: 14px; border-top: 1px solid #efeff3; color: #717178; font-size: 10px; }
+.shortcut-list > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.shortcut-list :is(dt, dd) { margin: 0; }
+.menu-footnote { margin: 16px 0 0; color: #85858e; font-size: 10px; line-height: 1.7; }
+
+.canvas-messages { position: absolute; z-index: 14; top: 88px; left: 50%; transform: translateX(-50%); display: grid; gap: 8px; width: min(580px, calc(100% - 40px)); pointer-events: none; }
+.canvas-message { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid; border-radius: 9px; font-size: 12px; line-height: 1.6; box-shadow: 0 4px 20px #16162508; overflow-wrap: anywhere; pointer-events: auto; }
+.canvas-message > span { flex: 1; min-width: 0; }
+.canvas-message.error { color: #96322d; background: #fff5f4; border-color: #efd0cd; }
+.canvas-message.warning { color: #76541b; background: #fffaf0; border-color: #ead9b5; }
+.canvas-message p { margin: 0; }
+.message-dismiss { display: grid; place-items: center; flex: none; width: 24px; height: 24px; padding: 0; border: 0; background: transparent; color: inherit; }
+.message-action { flex: none; margin-left: 8px; padding: 3px 7px; border: 1px solid currentColor; border-radius: 4px; background: transparent; color: inherit; font-size: 11px; white-space: nowrap; }
+.empty-state { position: absolute; inset: 100px 20px 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.empty-mark { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 14px; border: 1px solid #e5e5ea; border-radius: 14px; color: #777782; }
+.empty-mark svg { width: 26px; height: 26px; }
+.empty-state h1 { margin: 0 0 10px; font: 700 40px/1.15 "Amatic SC", cursive; }
+.empty-state p { max-width: 390px; margin: 0 0 20px; color: #717178; font-size: 11px; line-height: 1.8; }
+
+/* Hakushi captures these variables in exports, without the workspace ancestor. */
+.canvas-workspace[data-drawing-font="handwritten"] {
+  --canvas-text-font: "Amatic SC", cursive;
+  --canvas-text-weight: 700;
+  --canvas-text-weight-large: 700;
+  --canvas-text-small: 22px;
+  --canvas-text-medium: 28px;
+  --canvas-text-large: 40px;
+  --canvas-text-leading: 1.15;
+  --canvas-text-tracking: 0;
+}
+.hakushi-shape-text, .hakushi-text-editor {
+  font-family: var(--canvas-text-font);
+  font-size: var(--canvas-text-medium);
+  font-weight: var(--canvas-text-weight);
+  line-height: var(--canvas-text-leading);
+  letter-spacing: var(--canvas-text-tracking);
+}
+:is(.hakushi-shape-text, .hakushi-text-editor)[data-size="s"] { font-size: var(--canvas-text-small); }
+:is(.hakushi-shape-text, .hakushi-text-editor)[data-size="l"] { font-size: var(--canvas-text-large); font-weight: var(--canvas-text-weight-large); }
+
+.canvas-workspace .hakushi-tools { top: auto; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; max-width: calc(100% - 32px); padding: 6px; gap: 3px; flex-wrap: nowrap; overflow-x: auto; border-radius: 14px; z-index: 6; }
+.canvas-workspace .hakushi-controls { bottom: max(18px, env(safe-area-inset-bottom)); left: 20px; right: auto; padding: 5px; gap: 0; border-radius: 10px; z-index: 6; font-family: "Roboto Mono", monospace; }
+.canvas-workspace .hakushi-control { flex-shrink: 0; min-width: 30px; height: 32px; padding: 0 7px; border-radius: 7px; font-size: 10px; }
+.canvas-workspace .hakushi-control svg { width: 16px; height: 16px; }
+.canvas-workspace .hakushi-tools .hakushi-control { width: 32px; padding: 0; }
+.canvas-workspace .hakushi-tool[aria-pressed="true"] { color: #4943c1; background: #eeedfb; }
+.canvas-workspace .hakushi-control:focus-visible { outline: 2px solid #5550d8; outline-offset: 2px; }
+.canvas-workspace .hakushi-zoom { min-width: 46px; }
+
+.canvas-workspace .hakushi-style-panel { display: none; top: 76px; left: auto; right: 20px; bottom: auto; width: 212px; max-width: calc(100% - 40px); max-height: calc(100dvh - 155px); overflow-y: auto; overscroll-behavior: contain; padding: 16px; gap: 12px; border: 1px solid #e5e5ea; border-radius: 12px; box-shadow: 0 8px 30px #1616250c; font-size: 10px; z-index: 8; }
+.canvas-workspace[data-style-open="true"] .hakushi-style-panel { display: grid; }
+.canvas-workspace .hakushi-style-label { color: #717178; font-size: 9px; font-weight: 400; }
+.canvas-workspace .hakushi-style-option { font: 10px "Roboto Mono", monospace; }
+.canvas-workspace .hakushi-style-swatch { width: 18px; min-width: 18px; height: 18px; }
+.style-hint { display: none; position: absolute; top: 76px; right: 20px; z-index: 8; width: 212px; max-width: calc(100% - 40px); padding: 16px; border: 1px solid #e5e5ea; border-radius: 12px; background: #fff; box-shadow: 0 8px 30px #1616250c; color: #717178; font-size: 11px; line-height: 1.7; }
+.canvas-workspace[data-style-open="true"]:not(:has(.hakushi-node[data-ui-selected])) .style-hint { display: block; }
+.font-message, .font-error { display: none; position: absolute; top: 45%; left: 50%; z-index: 7; transform: translateX(-50%); width: min(360px, calc(100% - 40px)); color: #717178; text-align: center; font-size: 11px; line-height: 1.8; }
+.canvas-workspace[data-font-state="loading"]:has(.drawing-board) .font-message { display: block; }
+.canvas-workspace[data-font-state="error"]:has(.drawing-board) .font-error { display: block; color: #96322d; }
+.connection-warning { display: none; position: absolute; top: 18px; left: 50%; z-index: 15; transform: translateX(-50%); max-width: calc(100% - 40px); padding: 9px 13px; border: 1px solid #ead9b5; border-radius: 8px; background: #fffaf0; color: #76541b; font-size: 10px; text-align: center; }
+.phx-disconnected .connection-warning, .phx-disconnected.canvas-workspace .connection-warning { display: block; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-@media (max-width: 800px) {
-  .topbar { gap: 18px; padding: 12px 16px; }
-  .local-label, .file-label, .interaction-hint, kbd { display: none; }
-  .filebar { flex-wrap: wrap; padding: 8px 16px; gap: 6px; }
-  #open-file-form, #create-file-form { flex: 1 1 100%; }
-  #create-file-form { border: 0; padding: 0; }
-  .canvas-caption { display: none; }
-  .statusbar { padding: 10px 16px; }
-  .hakushi-style-panel { left: 12px; }
+@media (max-width: 1000px) {
+  .canvas-workspace .hakushi-tools { bottom: calc(max(18px, env(safe-area-inset-bottom)) + 52px); }
+}
+
+@media (max-width: 600px) {
+  .canvas-header { inset: 12px 12px auto; gap: 8px; }
+  .document-identity { max-width: calc(100% - 142px); }
+  .document-toggle { padding: 9px; gap: 6px; }
+  .document-name { font-size: 11px; }
+  .document-status { margin-left: 5px; font-size: 9px; }
+  .canvas-actions { gap: 5px; }
+  .save-button, .style-button { padding: 8px 9px; font-size: 10px; }
+  .canvas-actions kbd { display: none; }
+  .file-menu { top: 77px; left: 12px; width: min(354px, calc(100% - 24px)); max-height: calc(100dvh - 160px); padding: 16px; }
+  .canvas-workspace .hakushi-controls { left: 12px; }
+  .canvas-workspace .hakushi-tools { max-width: calc(100% - 24px); padding: 5px; gap: 1px; }
+  .canvas-workspace .hakushi-tools .hakushi-control { width: 30px; min-width: 30px; }
+  .canvas-workspace .hakushi-style-panel, .style-hint { top: 68px; right: 12px; max-height: calc(100dvh - 205px); }
+  .canvas-messages { top: 84px; width: calc(100% - 24px); }
+  .canvas-message { padding: 10px 12px; }
+  .connection-warning { top: 78px; }
+  .empty-state { inset: 110px 24px 150px; }
 }
