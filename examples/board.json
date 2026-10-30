@@ -1,0 +1,48 @@
+{
+  "edges": [],
+  "nodes": [
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "Specific Bucket",
+        "width": 2
+      },
+      "height": 40,
+      "id": "6bm23egk",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 371.62,
+      "y": 81.48
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "Specific Bucket",
+        "width": 2
+      },
+      "height": 40,
+      "id": "ug5bl5yf",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 717.64,
+      "y": 81.48
+    }
+  ],
+  "version": 1
+}
