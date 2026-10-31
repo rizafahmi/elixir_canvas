@@ -142,30 +142,14 @@ defmodule ElixirCanvas.DocumentTest do
     assert Graph.node(reopened.graph, "idea").x == 125
   end
 
-  test "new documents persist handwritten appearance through saving and reopening", %{
-    tmp_dir: directory
-  } do
-    path = Path.join(directory, "handwritten.json")
-    {:ok, document} = Document.create(path)
-
-    assert Document.drawing_font(document) == "handwritten"
-    assert document.source["appearance"] == %{"font" => "handwritten"}
-    assert Jason.decode!(File.read!(path))["appearance"] == %{"font" => "handwritten"}
-
-    {:ok, saved} = Document.save(document, document.graph)
-    {:ok, reopened} = Document.open(path)
-    assert Document.drawing_font(saved) == "handwritten"
-    assert Document.drawing_font(reopened) == "handwritten"
-    assert reopened.source["appearance"] == %{"font" => "handwritten"}
-    assert reopened.source["version"] == 1
-  end
-
   test "appearance objects and unknown metadata survive unrelated graph edits", %{path: path} do
     original = path |> File.read!() |> Jason.decode!()
 
     for appearance <- [
           %{},
           %{"font" => "sans"},
+          %{"font" => "heading"},
+          %{"font" => "mono"},
           %{"font" => "handwritten"},
           %{"future" => %{"palette" => ["ink", "blue"], "enabled" => true}},
           %{"font" => "handwritten", "future" => %{"custom" => nil}}
@@ -201,6 +185,12 @@ defmodule ElixirCanvas.DocumentTest do
           %{"font" => ""},
           %{"font" => "serif"},
           %{"font" => "Sans"},
+          %{"font" => "Schibsted Grotesk"},
+          %{"font" => "Unbounded"},
+          %{"font" => "Martian Mono"},
+          %{"font" => "Amatic SC"},
+          %{"font" => "body"},
+          %{"font" => "monospace"},
           %{"font" => 1},
           %{"font" => true},
           %{"font" => []},
@@ -208,8 +198,65 @@ defmodule ElixirCanvas.DocumentTest do
         ] do
       bytes = original |> Map.put("appearance", appearance) |> Jason.encode!()
       File.write!(path, bytes)
-      assert {:error, reason} = Document.open(path)
-      assert reason =~ "Appearance"
+      assert {:error, _reason} = Document.open(path)
+      assert File.read!(path) == bytes
+    end
+  end
+
+  test "portable colors and typography roundtrip without changing geometry or unknown metadata",
+       %{
+         path: path
+       } do
+    original = path |> File.read!() |> Jason.decode!()
+
+    for font <- ~w(sans heading mono handwritten),
+        color <- ~w(none ink gray blue green yellow red violet accent surface) do
+      source =
+        original
+        |> Map.put("appearance", %{"font" => font, "future" => %{"intent" => "diagram"}})
+        |> put_in(["nodes", Access.at(0), "x"], -125.5)
+        |> put_in(["nodes", Access.at(0), "width"], 301.25)
+        |> put_in(["nodes", Access.at(0), "data", "fill"], color)
+        |> put_in(["nodes", Access.at(0), "data", "stroke"], color)
+        |> put_in(["nodes", Access.at(0), "data", "rotation"], 17)
+        |> put_in(["nodes", Access.at(0), "data", "future"], %{"label" => "portable"})
+
+      bytes = Jason.encode!(source)
+      File.write!(path, bytes)
+      {:ok, document} = Document.open(path)
+      assert File.read!(path) == bytes
+      assert Document.status(document) == :unchanged
+      assert document.source == source
+
+      {:ok, _saved} = Document.save(document, document.graph)
+      {:ok, reopened} = Document.open(path)
+      assert reopened.source["appearance"] == source["appearance"]
+      assert length(reopened.source["nodes"]) == length(source["nodes"])
+      assert length(reopened.source["edges"]) == length(source["edges"])
+
+      for {saved_node, original_node} <- Enum.zip(reopened.source["nodes"], source["nodes"]) do
+        assert Map.take(saved_node, Map.keys(original_node)) == original_node
+      end
+
+      for {saved_edge, original_edge} <- Enum.zip(reopened.source["edges"], source["edges"]) do
+        assert Map.take(saved_edge, Map.keys(original_edge)) == original_edge
+      end
+
+      assert Document.drawing_font(reopened) == font
+    end
+  end
+
+  test "resolved colors and unsupported names are rejected without rewriting", %{path: path} do
+    original = path |> File.read!() |> Jason.decode!()
+
+    for field <- ~w(fill stroke), color <- ["#c5f82a", "rgb(10, 11, 13)", "acid", "magenta"] do
+      bytes =
+        original
+        |> put_in(["nodes", Access.at(0), "data", field], color)
+        |> Jason.encode!()
+
+      File.write!(path, bytes)
+      assert {:error, _reason} = Document.open(path)
       assert File.read!(path) == bytes
     end
   end

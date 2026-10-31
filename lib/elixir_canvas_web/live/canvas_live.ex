@@ -16,7 +16,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
         document: nil,
         graph: nil,
         path_input: path,
-        drawing_font: "handwritten",
+        drawing_font: "sans",
         dirty: false,
         disk_status: :unchanged,
         error: nil,
@@ -79,7 +79,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
     do: {:noreply, load_document(socket, socket.assigns.document.path)}
 
   def handle_event("appearance", %{"font" => font}, socket)
-      when font in ["handwritten", "sans"] do
+      when font in ["sans", "heading", "mono", "handwritten"] do
     if socket.assigns.document do
       dirty =
         font != Document.drawing_font(socket.assigns.document) or
@@ -259,16 +259,6 @@ defmodule ElixirCanvasWeb.CanvasLive do
         </div>
         <div class="canvas-actions">
           <button
-            id="style-toggle"
-            class="style-button"
-            phx-click="toggle-style"
-            aria-label="Object styles"
-            aria-pressed={to_string(@style_open)}
-            disabled={!@document}
-          >
-            <.glyph name="style" /><span>Style</span>
-          </button>
-          <button
             id="save-file"
             class="save-button"
             phx-click={JS.dispatch("canvas:save", to: "#workspace")}
@@ -279,6 +269,18 @@ defmodule ElixirCanvasWeb.CanvasLive do
           </button>
         </div>
       </header>
+
+      <div :if={@document} class="drawing-dock" role="group" aria-label="Drawing appearance">
+        <button
+          id="style-toggle"
+          class="style-button"
+          phx-click="toggle-style"
+          aria-label="Object styles"
+          aria-pressed={to_string(@style_open)}
+        >
+          <.glyph name="style" /><span>Style</span>
+        </button>
+      </div>
 
       <section
         :if={@file_menu_open}
@@ -323,10 +325,12 @@ defmodule ElixirCanvasWeb.CanvasLive do
           <form id="appearance-form" phx-change="appearance">
             <label class="field-label" for="drawing-font">Drawing lettering</label>
             <select id="drawing-font" name="font">
+              <option value="sans" selected={@drawing_font == "sans"}>Body · Sans-serif</option>
+              <option value="heading" selected={@drawing_font == "heading"}>Heading</option>
+              <option value="mono" selected={@drawing_font == "mono"}>Monospace</option>
               <option value="handwritten" selected={@drawing_font == "handwritten"}>
-                Handwritten · Amatic SC
+                Handwritten
               </option>
-              <option value="sans" selected={@drawing_font == "sans"}>Sans-serif</option>
             </select>
             <p class="menu-footnote">Applies to all text in this file. Save to keep the choice.</p>
           </form>
@@ -343,6 +347,14 @@ defmodule ElixirCanvasWeb.CanvasLive do
           <div>
             <dt>Save</dt>
             <dd>⌘ / Ctrl S</dd>
+          </div>
+          <div>
+            <dt>Zoom in</dt>
+            <dd>⌘ / Ctrl +</dd>
+          </div>
+          <div>
+            <dt>Zoom out</dt>
+            <dd>⌘ / Ctrl −</dd>
           </div>
           <div>
             <dt>Text · rectangle · ellipse</dt>
@@ -391,7 +403,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
 
       <section :if={!@document} class="empty-state">
         <.glyph name="file" class="empty-mark" />
-        <h1>Make room for an idea.</h1>
+        <h1 class="headline-two-tone">Make room <span class="muted">for an idea.</span></h1>
         <p>Open a canvas or create a local file to begin.</p>
         <button class="menu-button" phx-click="toggle-file-menu">Choose a file</button>
       </section>

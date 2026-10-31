@@ -5,34 +5,54 @@ and Hakushi. The JSON file is the document, not an export from a database.
 
 ## Interface
 
-The file-backed editor uses an uninterrupted white canvas, compact drawing tools,
-and a restrained indigo selection color. It takes inspiration from sketching tools
-without reproducing Okso's identity or exact control arrangement.
+The editor uses the light Neo-Acid design system: Raw Plaster paper, square-edged
+floating controls, crisp black frames, and acid-filled active tools. Hovered tools
+stay neutral so the selected tool remains distinct. Cobalt marks object selection
+and keyboard focus. Drawing colors and typography resolve through the interface's
+theme from portable names; the document retains its authored geometry and style intent.
 
-- The filename at the upper left opens the document menu: open, create, reload,
-  drawing lettering, and shortcut help.
-- **Save** and **Style** are at the upper right. Selection alone does not open the
-  style panel. Escape closes the menus and inspector.
-- Drawing tools are centered along the bottom; zoom, fit, arrange, undo, redo,
-  image export, and paper controls sit at the lower left. On narrow screens the
-  drawing tools move above these controls.
+- **Paper** sits beside the filename at the upper left. The filename opens the
+  document menu: open, create, reload, drawing lettering, and shortcut help.
+- **Download** exports an image beside **Save** at the upper right; Save writes
+  the source JSON. Download becomes icon-only on narrow screens.
+- Drawing tools and **Style** share the bottom dock, separated by a divider.
+  The inspector opens above its end of the dock, not over the drawing tools.
+  Style becomes icon-only on the smallest screens so every drawing tool fits.
+- Undo and redo stay at the top of the left rail. The live zoom percentage below
+  them opens a popover with zoom out/in, Fit to screen, and Reset to 100%.
+  Repeated adjustments keep it open; Escape or an outside click closes it.
+  Opening the popover does not change zoom, and the percentage also tracks wheel
+  zoom while closed.
+- Arrangement remains separate below a divider, with its options beside the
+  rail. The rail ends above the dock and scrolls vertically in short windows.
+- Selection alone does not open Style. Escape closes the menus and inspector.
 - Unsaved state remains visible under the filename. External changes and save
   failures appear as actionable messages rather than disappearing into a menu.
 
-New files use Amatic SC handwriting. Existing files without a font choice keep
-their original sans-serif text metrics. Change **Drawing lettering** in the document
-menu to opt into either style, then save the choice. Changing the font may reflow
-text inside the existing boxes; it does not automatically resize every object.
+New files use the generic `sans` typography role. **Drawing lettering** selects
+`sans`, `heading`, `mono`, or `handwritten` for the file; Save keeps that role,
+not a font-family name. The current Neo-Acid renderer resolves those roles to
+Mona Sans, Unbounded, Monaspace Neon, and Amatic SC respectively. A different
+interface can choose different families. Text may wrap differently under another
+theme, but opening or restyling a view must not resize or reposition saved objects.
 
-Fonts are served locally from `priv/static/fonts`, and canvas initialization waits
-for them before measuring or editing text. The separate visual-study route has
-been removed; this is the actual editor, with the same explicit file persistence.
+The five self-hosted Neo-Acid faces serve the interface and the matching drawing
+roles: Unbounded 800, Mona Sans 400/700, and Monaspace Neon 400/700.
+Handwritten intent uses the separately bundled Amatic SC 700 face. Fonts are served
+from `priv/static/fonts`; canvas initialization waits for the resolved drawing
+font before measuring or editing text. No npm install is needed to run the app.
 
-Font binaries are unmodified upstream distributions from
-[Google Fonts](https://github.com/google/fonts): Amatic SC Bold and Roboto Mono
-variable upright. Their SIL Open Font License notices are included beside each
-font in `priv/static/fonts/amatic-sc/OFL.txt` and
-`priv/static/fonts/roboto-mono/OFL.txt`.
+See [DESIGN.md](DESIGN.md) for the shared design rules and the app-specific
+light-first adaptation. Shared primitives are in `assets/css/tokens.css`; workspace
+styling is in `assets/css/app.css`. The actual editor is the design surface, not a
+separate visual-study route.
+
+Amatic SC Bold is an unmodified upstream distribution from
+[Google Fonts](https://github.com/google/fonts), with its SIL Open Font License
+notice in `priv/static/fonts/amatic-sc/OFL.txt`. The five Neo-Acid faces are
+vendored from [Fontsource](https://fontsource.org/) packages `@fontsource/unbounded`,
+`@fontsource/mona-sans`, and `@fontsource/monaspace-neon`; their upstream SIL Open
+Font License notices are included in `priv/static/fonts/neo-acid`.
 
 ## Run
 
@@ -67,7 +87,11 @@ IPv4 loopback. This is not a hosted multi-user application.
   and lines. Drag between shape handles to create a connected arrow.
 - Double-click a shape to edit its text. Select it to resize or rotate it; open
   **Style** to change its appearance.
-- Pan with Space + drag; use the bottom-left controls to zoom or fit the canvas.
+- Pan with Space + drag; open the left rail's zoom percentage to zoom or fit the canvas.
+- With a canvas loaded, Command/Ctrl + `+` (or `=`) zooms in and Command/Ctrl + `-`
+  zooms out instead of zooming the browser page. These work with the zoom popover
+  closed or open, including while a text field has focus. Unmodified `+` and `-`
+  still type normally.
 - Undo and redo are provided by Hakushi. Reloading the source resets that history.
 - Save explicitly with **Save**, Command-S, or Control-S. Saving commits an active
   shape text editor and waits for Hakushi's resulting changes, including automatic
@@ -98,26 +122,37 @@ serialization, not the JSON Canvas standard.
 
 ### Drawing appearance
 
-Optional top-level `appearance` is an object. Its `font`, when present, is
-`handwritten` (Amatic SC Bold) or `sans` (the original Avenir/Segoe UI system font
-stack). A missing object or missing `font` means `sans`; saving an existing file
-does not insert font metadata unless you change the choice.
+Optional top-level `appearance` is an object. Its `font`, when present, is a
+generic typography role, not a font-family name. A missing object or missing
+`font` means `sans`; saving an existing file does not insert appearance metadata
+unless you explicitly change the lettering role.
+
+| Role | Intent | Current Neo-Acid rendering |
+| --- | --- | --- |
+| `sans` | Body and general labels | Mona Sans 400; large emphasis 700 |
+| `heading` | Display headings | Unbounded 800 |
+| `mono` | Code and technical labels | Monaspace Neon 400; large emphasis 700 |
+| `handwritten` | Handwritten lettering | Amatic SC 700 |
 
 New files explicitly include:
 
 ```json
-\"appearance\": {\"font\": \"handwritten\"}
+"appearance": {"font": "sans"}
 ```
 
-The font choice applies to all drawing text and is saved with the document, not
-as an application preference. Shape dimensions and `data.size` remain the source
-of geometry and size. Other appearance metadata is preserved; unsupported font
-names and non-object appearance values are rejected.
+The role applies to all drawing text. Shape dimensions and `data.size` remain
+authored geometry and size. Other appearance metadata is preserved; unsupported
+role names and non-object appearance values are rejected.
 
-New graphical objects explicitly record unfilled black styling, a two-pixel
-stroke, and left-aligned text. Existing object styling is not rewritten to these
-creation defaults. The defaults below describe hand-written JSON that omits
-style fields.
+The interface owns resolved font families and palette values. It does not add a
+theme identifier, resolved font name, or hex colors when saving. Another renderer
+may interpret the same roles differently; pixel-identical rendering is not part
+of the portable JSON contract. PNG exports capture the current rendered appearance.
+
+New graphical objects explicitly record unfilled ink styling, a two-pixel stroke,
+sharp rectangle corners, and left-aligned text. Existing authored corners and
+styles are preserved, not reset to the creation defaults. The defaults below
+describe hand-written JSON that omits style fields.
 
 ### Nodes
 
@@ -139,7 +174,7 @@ Style fields in `data` follow the Shapes kit:
 
 | Field | Supported values | Default when omitted |
 | --- | --- | --- |
-| `fill` | `none`, `ink`, `gray`, `blue`, `green`, `yellow`, `red`, `violet` | `blue`; text: `none` |
+| `fill` | `none`, `ink`, `surface`, `accent`, `gray`, `blue`, `green`, `yellow`, `red`, `violet` | `blue`; text: `none` |
 | `stroke` | Same colors as fill | `blue`; text: `none`; lines: `ink` |
 | `width` | `1`, `2`, `4` (stroke width, not node width) | `2` |
 | `dash` | Boolean | `false` |
@@ -149,9 +184,10 @@ Style fields in `data` follow the Shapes kit:
 | `rotation` | Numeric degrees | `0` |
 | `arrow` | `end`, `both`, `none` (standalone lines) | `end` |
 
-Named colors resolve through the app's local theme. The file describes structure
-and styling intent; it does not embed fonts or guarantee pixel-identical rendering
-in unrelated software.
+Named colors resolve through the renderer's palette. Hue names such as `blue`,
+`yellow`, and `red` retain their hue intent across themes. `ink`, `surface`, and
+`accent` are theme-relative: this interface resolves accent to acid and surface
+to a neutral fill. These remain names in the file, not resolved color values.
 
 ### Edges
 

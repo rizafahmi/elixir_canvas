@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,6 +7,20 @@
     <.live_title default="Canvas" suffix=" · Local canvas">
       {assigns[:page_title]}
     </.live_title>
+    <link
+      rel="preload"
+      href={~p"/fonts/neo-acid/mona-sans-latin-400-normal.woff2"}
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      href={~p"/fonts/neo-acid/monaspace-neon-latin-700-normal.woff2"}
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>

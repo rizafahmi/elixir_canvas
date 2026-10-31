@@ -3,54 +3,102 @@
     {
       "animated": false,
       "data": {},
-      "id": "idea-to-make",
+      "id": "7blrw3t4:->zet2hozs:",
       "marker": "arrow",
       "path": "bezier",
-      "source": "idea",
-      "source_handle": "right",
-      "target": "make",
-      "target_handle": "left"
+      "source": "7blrw3t4",
+      "target": "zet2hozs"
     }
   ],
   "nodes": [
     {
       "data": {
         "align": "center",
+        "dash": false,
         "fill": "yellow",
         "kind": "rect",
         "radius": 8,
+        "rotation": 0,
         "size": "m",
-        "stroke": "ink",
-        "text": "Start with an idea",
-        "width": 2
+        "stroke": "violet",
+        "text": "Something special here",
+        "width": 4
       },
-      "height": 140,
-      "id": "idea",
+      "height": 68.63,
+      "id": "7blrw3t4",
       "locked": false,
       "type": "shape",
-      "width": 240,
-      "x": -28.59,
-      "y": 0
+      "width": 220,
+      "x": 4.5,
+      "y": -44.38
     },
     {
       "data": {
         "align": "center",
-        "fill": "blue",
-        "kind": "rect",
+        "dash": false,
+        "fill": "none",
+        "kind": "ellipse",
         "radius": 8,
+        "rotation": 0,
         "size": "m",
         "stroke": "ink",
-        "text": "Make room for the next one",
+        "text": "Oval here",
         "width": 2
       },
-      "height": 140,
-      "id": "make",
+      "height": 59.1,
+      "id": "zet2hozs",
       "locked": false,
       "type": "shape",
-      "width": 240,
-      "x": 511.82,
-      "y": -94.56
+      "width": 203.7,
+      "x": 384.97,
+      "y": -39.62
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "kind": "triangle",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "",
+        "width": 2
+      },
+      "height": 172.6,
+      "id": "ztsqteyf",
+      "locked": false,
+      "type": "shape",
+      "width": 271.8,
+      "x": 656.03,
+      "y": 124.62
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "tesxt",
+        "width": 2
+      },
+      "height": 40,
+      "id": "fjn34mxi",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 455.63,
+      "y": 142.68
     }
   ],
+  "paper": {
+    "background": "cross",
+    "grid": 20
+  },
   "version": 1
 }

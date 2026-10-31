@@ -4,8 +4,8 @@ defmodule ElixirCanvas.Document do
 
   Hakushi owns graph operations; this module owns the portable file contract.
   Unknown fields are retained when supported objects are edited and saved.
-  Appearance metadata is optional; omitted fonts retain sans-serif rendering.
-  Newly created canvases explicitly select handwritten rendering.
+  Appearance metadata is optional; omitted fonts retain the generic sans role.
+  Newly created canvases explicitly select sans. Interfaces resolve roles and colors.
   """
 
   alias Hakushi.Graph
@@ -84,7 +84,7 @@ defmodule ElixirCanvas.Document do
     document = %__MODULE__{
       path: path,
       graph: graph,
-      source: %{"appearance" => %{"font" => "handwritten"}}
+      source: %{"appearance" => %{"font" => "sans"}}
     }
 
     bytes = encode(document, graph)
@@ -231,8 +231,8 @@ defmodule ElixirCanvas.Document do
 
   defp validate_style(id, data) do
     options = %{
-      "fill" => ~w(none ink gray blue green yellow red violet),
-      "stroke" => ~w(none ink gray blue green yellow red violet),
+      "fill" => ~w(none ink gray blue green yellow red violet accent surface),
+      "stroke" => ~w(none ink gray blue green yellow red violet accent surface),
       "width" => [1, 2, 4],
       "dash" => [true, false],
       "radius" => [0, 8],
@@ -273,10 +273,11 @@ defmodule ElixirCanvas.Document do
   defp validate_appearance(:error), do: :ok
 
   defp validate_appearance({:ok, %{} = appearance}) do
-    if not Map.has_key?(appearance, "font") or appearance["font"] in ~w(sans handwritten) do
+    if not Map.has_key?(appearance, "font") or
+         appearance["font"] in ~w(sans heading mono handwritten) do
       :ok
     else
-      {:error, "Appearance font must be sans or handwritten."}
+      {:error, "Appearance font must be sans, heading, mono, or handwritten."}
     end
   end
 
