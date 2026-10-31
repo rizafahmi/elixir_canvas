@@ -214,6 +214,66 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert node_box(view, board_id(view), "make") == List.to_tuple(grown_box)
   end
 
+  test "endpoint edits cross direction atomically and reject an invalid box", %{
+    view: view,
+    path: path,
+    source: source
+  } do
+    line = %{
+      "id" => "line",
+      "type" => "shape-line",
+      "x" => 20.25,
+      "y" => 220.125,
+      "width" => 220,
+      "height" => 100,
+      "data" => %{
+        "from" => [208.375, 88.125],
+        "to" => [12.125, 12.625],
+        "stroke" => "surface",
+        "arrow" => "both",
+        "future" => %{"keep" => true}
+      }
+    }
+
+    source = Map.update!(source, "nodes", &(&1 ++ [line]))
+    File.write!(path, Jason.encode!(source))
+    render_click(view, "reload")
+    board = board_id(view)
+    assert {:ok, original} = Document.open(path)
+    before = Graph.node(original.graph, "line")
+
+    params = %{
+      "from" => [12.125, 12.25],
+      "to" => [182.375, 124.75],
+      "box" => [-150, 108, 194.4, 148.8]
+    }
+
+    assert :ok = CanvasTest.edit(view, board, "line", "endpoints", params)
+    assert node_box(view, board, "line") == {-150, 108, 194.4, 148.8}
+    assert :ok = CanvasTest.undo(view, board)
+    assert node_box(view, board, "line") == {before.x, before.y, before.width, before.height}
+    assert has_element?(view, "[data-dirty=false]")
+    assert :ok = CanvasTest.redo(view, board)
+    render_click(view, "save")
+    assert {:ok, saved} = Document.open(path)
+    after_edit = Graph.node(saved.graph, "line")
+    assert after_edit.data == Map.merge(before.data, Map.take(params, ["from", "to"]))
+    [tx, ty] = after_edit.data["to"]
+    [original_tx, original_ty] = before.data["to"]
+    assert after_edit.x + tx == before.x + original_tx
+    assert after_edit.y + ty == before.y + original_ty
+    assert saved.graph.edges == original.graph.edges
+
+    for box <- [nil, [0, 0, 0, 100], [0, 0, 100, -1], [0, 0, "wide", 100]] do
+      invalid = %{params | "from" => [200, 200], "box" => box}
+      assert {:error, _reason} = CanvasTest.edit(view, board, "line", "endpoints", invalid)
+      assert has_element?(view, "[data-dirty=false]")
+    end
+
+    render_click(view, "reload")
+    assert node_box(view, board_id(view), "line") == {-150, 108, 194.4, 148.8}
+  end
+
   defp board_id(view) do
     view
     |> render()

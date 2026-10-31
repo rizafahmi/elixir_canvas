@@ -86,7 +86,7 @@
         "rotation": 0,
         "size": "m",
         "stroke": "none",
-        "text": "Title Over Here",
+        "text": "Product Ideas",
         "width": 2
       },
       "height": 55.74,
@@ -96,6 +96,52 @@
       "width": 181.48,
       "x": 384.97,
       "y": -271.62
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": false,
+        "from": [
+          12,
+          80.1
+        ],
+        "stroke": "ink",
+        "to": [
+          361.1,
+          12
+        ],
+        "width": 2
+      },
+      "height": 92.1,
+      "id": "o5zjk452",
+      "locked": false,
+      "type": "shape-line",
+      "width": 373.1,
+      "x": 192.4,
+      "y": 159.3
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": false,
+        "from": [
+          13.6,
+          12
+        ],
+        "stroke": "ink",
+        "to": [
+          12,
+          598.8
+        ],
+        "width": 2
+      },
+      "height": 610.8,
+      "id": "ods6sqr7",
+      "locked": false,
+      "type": "shape-line",
+      "width": 25.6,
+      "x": 1000,
+      "y": -259.7
     }
   ],
   "paper": {

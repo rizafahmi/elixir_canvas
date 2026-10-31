@@ -85,6 +85,265 @@ function mountObjectTypography(canvas) {
   canvas.drawStylePanel()
 }
 
+function mountLineTool(canvas) {
+  const workspace = canvas.root.closest(".canvas-workspace")
+  const dockObserver = new ResizeObserver(([entry]) => {
+    workspace.style.setProperty("--dock-height", `${entry.borderBoxSize[0].blockSize}px`)
+  })
+  const buildTools = canvas.buildTools.bind(canvas)
+  canvas.buildTools = () => {
+    buildTools()
+    const line = canvas.toolsEl?.querySelector('[data-tool="drawing:straight-line"]')
+    if (line) {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+      path.setAttribute("d", "M5 19L19 5")
+      line.querySelector("svg").replaceChildren(path)
+      line.setAttribute("aria-keyshortcuts", "L")
+    }
+    dockObserver.disconnect()
+    if (canvas.toolsEl) dockObserver.observe(canvas.toolsEl)
+  }
+  canvas.buildTools()
+
+  const isStraightLineGesture = gesture => gesture?.kind === "shape" && gesture.tool.tool === "straight-line"
+  // Shapes.line stores tenths of a canvas pixel; use that precision in the preview.
+  const roundLinePoint = point => ({x: Math.round(point.x * 10) / 10, y: Math.round(point.y * 10) / 10})
+  const constrainLine = gesture => {
+    if (!gesture.square) {
+      gesture.end = roundLinePoint(gesture.rawEnd)
+      return
+    }
+    const dx = gesture.rawEnd.x - gesture.start.x
+    const dy = gesture.rawEnd.y - gesture.start.y
+    // Follow native rotation's angle rounding, with exact axis/diagonal deltas.
+    const angle = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4)
+    const x = Math.round(Math.cos(angle))
+    const y = Math.round(Math.sin(angle))
+    const length = Math.hypot(dx, dy) * (x && y ? Math.SQRT1_2 : 1)
+    const delta = Math.round(length * 10) / 10
+    gesture.end = roundLinePoint({x: gesture.start.x + x * delta, y: gesture.start.y + y * delta})
+  }
+
+  const commitShape = canvas.commitShape.bind(canvas)
+  canvas.commitShape = gesture => {
+    if (gesture.tool.tool !== "straight-line") return commitShape(gesture)
+    // Native line gestures attach to shapes. This tool always creates a node.
+    if (Math.hypot(gesture.end.x - gesture.start.x, gesture.end.y - gesture.start.y) * canvas.view.zoom < 6) return
+    canvas.push("hakushi:draw", {
+      tool: `${gesture.tool.kit}:${gesture.tool.tool}`,
+      points: [[gesture.start.x, gesture.start.y], [gesture.end.x, gesture.end.y]],
+    }, reply => {
+      if (typeof reply.drawn === "string") canvas.pendingSelect = [reply.drawn]
+      canvas.selectPending()
+    })
+    canvas.setTool(null)
+  }
+  const markLineEnd = canvas.markLineEnd.bind(canvas)
+  canvas.markLineEnd = (...args) => {
+    if (canvas.tool?.tool !== "straight-line") markLineEnd(...args)
+  }
+
+  const selectedLine = () => {
+    if (canvas.selected.size !== 1 || canvas.tool || canvas.config.readonly) return null
+    const node = canvas.nodes.get([...canvas.selected][0])
+    return node?.type === "shape-line" && !node.locked && !canvas.gone.has(node.id) ? node : null
+  }
+  const pendingEndpoints = new Map()
+  const pointsOf = node => {
+    const pending = pendingEndpoints.get(node.id)
+    if (pending) return {from: {...pending.points.from}, to: {...pending.points.to}}
+    const aim = node.el.querySelector(".hakushi-shape-line-aim")
+    return {
+      from: {x: node.x + Number(aim.getAttribute("x1")), y: node.y + Number(aim.getAttribute("y1"))},
+      to: {x: node.x + Number(aim.getAttribute("x2")), y: node.y + Number(aim.getAttribute("y2"))},
+    }
+  }
+  const editEndpoints = (node, points) => {
+    if (node.locked || canvas.config.readonly) return
+    // Keep Shapes.line's 12px padding and relative endpoint convention, including
+    // a positive box when the segment is horizontal, vertical, or reversed.
+    const roundBox = value => Math.round(value * 10) / 10
+    const x = roundBox(Math.min(points.from.x, points.to.x) - 12)
+    const y = roundBox(Math.min(points.from.y, points.to.y) - 12)
+    const pending = {points}
+    pendingEndpoints.set(node.id, pending)
+    canvas.push("hakushi:edit", {
+      node: node.id,
+      action: "endpoints",
+      from: [points.from.x - x, points.from.y - y],
+      to: [points.to.x - x, points.to.y - y],
+      box: [x, y, roundBox(Math.abs(points.to.x - points.from.x) + 24), roundBox(Math.abs(points.to.y - points.from.y) + 24)],
+    }, () => {
+      if (pendingEndpoints.get(node.id) === pending) pendingEndpoints.delete(node.id)
+      canvas.schedule()
+    })
+  }
+  const endpoints = ["from", "to"].map(end => {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "hakushi-resizer drawing-line-endpoint"
+    button.dataset.end = end
+    button.hidden = true
+    button.setAttribute("aria-label", end === "from" ? "Line start endpoint" : "Line end endpoint")
+    button.setAttribute("aria-description", "Drag or use the arrow keys to move this endpoint.")
+    canvas.ui.append(button)
+    return button
+  })
+  const drawOverlay = canvas.drawOverlay.bind(canvas)
+  canvas.drawOverlay = () => {
+    drawOverlay()
+    const gesture = canvas.gesture?.kind === "line-endpoint" ? canvas.gesture : null
+    const node = gesture?.node || selectedLine()
+    const visible = node && !node.locked && !canvas.cropping && (!canvas.gesture || gesture)
+    const points = visible && (gesture?.points || pointsOf(node))
+    for (const button of endpoints) {
+      button.hidden = !visible
+      if (!visible) continue
+      const point = points[button.dataset.end]
+      button.style.left = `${point.x * canvas.view.zoom + canvas.view.x}px`
+      button.style.top = `${point.y * canvas.view.zoom + canvas.view.y}px`
+    }
+    if (gesture) {
+      const preview = document.createElementNS("http://www.w3.org/2000/svg", "line")
+      preview.setAttribute("class", "hakushi-shape-preview")
+      for (const [key, value] of Object.entries({x1: points.from.x, y1: points.from.y, x2: points.to.x, y2: points.to.y})) {
+        preview.setAttribute(key, value)
+      }
+      preview.setAttribute("vector-effect", "non-scaling-stroke")
+      canvas.overlay.append(preview)
+    }
+  }
+  const pointerDown = canvas.pointerDown.bind(canvas)
+  canvas.pointerDown = event => {
+    const button = event.target.closest(".drawing-line-endpoint")
+    const node = button && selectedLine()
+    if ((canvas.gesture?.kind === "line-endpoint" || isStraightLineGesture(canvas.gesture)) && !canvas.pointers.has(event.pointerId)) {
+      // Native pointerDown cancels before reading both touches. Restore the first
+      // touch after our line cancellation releases its capture/state.
+      const pointers = new Map(canvas.pointers)
+      canvas.cancelGesture()
+      canvas.pointers = pointers
+      return pointerDown(event)
+    }
+    if (!node || canvas.gesture || event.button !== 0 || canvas.space) {
+      pointerDown(event)
+      const gesture = canvas.gesture
+      if (isStraightLineGesture(gesture) && gesture.pointer === event.pointerId) {
+        gesture.rawEnd = gesture.start
+        gesture.start = roundLinePoint(gesture.start)
+        constrainLine(gesture)
+      }
+      return
+    }
+    event.preventDefault()
+    canvas.bounds = canvas.root.getBoundingClientRect()
+    canvas.pointers.set(event.pointerId, canvas.local(event))
+    canvas.capture(event)
+    button.focus({preventScroll: true})
+    const points = pointsOf(node)
+    canvas.gesture = {kind: "line-endpoint", pointer: event.pointerId, node, end: button.dataset.end,
+      start: canvas.canvasPoint(event), original: points, points: {...points}}
+    node.el.classList.add("drawing-line-editing")
+    canvas.schedule()
+  }
+  const pointerMove = canvas.pointerMove.bind(canvas)
+  canvas.pointerMove = event => {
+    const gesture = canvas.gesture
+    if (isStraightLineGesture(gesture)) {
+      if (event.pointerId !== gesture.pointer) return
+      pointerMove(event)
+      // Retain the unconstrained pointer position so releasing Shift never sticks.
+      gesture.rawEnd = gesture.end
+      constrainLine(gesture)
+      return
+    }
+    if (gesture?.kind !== "line-endpoint") return pointerMove(event)
+    if (event.pointerId !== gesture.pointer) return
+    const point = canvas.canvasPoint(event)
+    const origin = gesture.original[gesture.end]
+    // Apply the pointer delta so grabbing the edge of a target never jumps.
+    gesture.points[gesture.end] = {
+      x: origin.x + Math.round((point.x - gesture.start.x) * 100) / 100,
+      y: origin.y + Math.round((point.y - gesture.start.y) * 100) / 100,
+    }
+    canvas.schedule()
+  }
+  const finishEndpoint = cancelled => {
+    const gesture = canvas.gesture
+    canvas.gesture = null
+    canvas.pointers.delete(gesture.pointer)
+    gesture.node.el.classList.remove("drawing-line-editing")
+    if (canvas.root.hasPointerCapture(gesture.pointer)) canvas.root.releasePointerCapture(gesture.pointer)
+    if (!cancelled && JSON.stringify(gesture.points) !== JSON.stringify(gesture.original)) {
+      editEndpoints(gesture.node, gesture.points)
+    }
+    canvas.schedule()
+  }
+  const pointerUp = canvas.pointerUp.bind(canvas)
+  canvas.pointerUp = (event, cancelled = false) => {
+    if (!cancelled && isStraightLineGesture(canvas.gesture) && event.pointerId === canvas.gesture.pointer) {
+      canvas.pointerMove(event)
+    }
+    if (canvas.gesture?.kind !== "line-endpoint") return pointerUp(event, cancelled)
+    if (event.pointerId !== canvas.gesture.pointer) return
+    if (!cancelled) canvas.pointerMove(event)
+    finishEndpoint(cancelled)
+  }
+  const cancelGesture = canvas.cancelGesture.bind(canvas)
+  canvas.cancelGesture = () => {
+    const gesture = canvas.gesture
+    if (gesture?.kind === "line-endpoint") return finishEndpoint(true)
+    cancelGesture()
+    if (isStraightLineGesture(gesture)) {
+      canvas.pointers.delete(gesture.pointer)
+      if (canvas.root.hasPointerCapture(gesture.pointer)) canvas.root.releasePointerCapture(gesture.pointer)
+    }
+  }
+  const keyDown = canvas.keyDown.bind(canvas)
+  canvas.keyDown = event => {
+    if (event.key === "Escape" && canvas.gesture?.kind === "line-endpoint") {
+      event.preventDefault()
+      return canvas.cancelGesture()
+    }
+    const end = event.target.closest(".drawing-line-endpoint")?.dataset.end
+    const node = end && selectedLine()
+    const delta = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[event.key]
+    if (node && delta && (event.metaKey || event.ctrlKey || event.altKey)) return
+    if (!node || !delta || canvas.gesture) return keyDown(event)
+    event.preventDefault()
+    const points = pointsOf(node)
+    const step = event.shiftKey ? 10 : 1
+    points[end] = {x: points[end].x + delta[0] * step, y: points[end].y + delta[1] * step}
+    editEndpoints(node, points)
+  }
+  const shiftChanged = event => {
+    const gesture = canvas.gesture
+    if (event.key !== "Shift" || !isStraightLineGesture(gesture) || event.defaultPrevented || event.isComposing) return
+    if (event.target.closest("input, textarea, select") || event.target.isContentEditable) return
+    gesture.square = event.shiftKey
+    constrainLine(gesture)
+    canvas.schedule()
+  }
+  const lostCapture = event => {
+    const gesture = canvas.gesture
+    if (gesture?.kind === "line-endpoint" || isStraightLineGesture(gesture) && gesture.pointer === event.pointerId) {
+      canvas.cancelGesture()
+    }
+  }
+  canvas.root.addEventListener("keydown", shiftChanged)
+  canvas.root.addEventListener("keyup", shiftChanged)
+  canvas.root.addEventListener("lostpointercapture", lostCapture)
+  canvas.schedule()
+  return () => {
+    canvas.cancelGesture()
+    dockObserver.disconnect()
+    canvas.root.removeEventListener("keydown", shiftChanged)
+    canvas.root.removeEventListener("keyup", shiftChanged)
+    canvas.root.removeEventListener("lostpointercapture", lostCapture)
+    endpoints.forEach(button => button.remove())
+  }
+}
+
 // Text commits can enqueue an automatic resize in their reply callback.
 // Track the whole chain, not an arbitrary delay after blurring the editor.
 const FileCanvas = {
@@ -118,6 +377,7 @@ const FileCanvas = {
     setFontState(workspace, "ready")
     // Keep initialization outside the font catch: a canvas error is not a font error.
     Hakushi.mounted.call(this)
+    this.destroyLineTool = mountLineTool(this.canvas)
     mountObjectTypography(this.canvas)
     this.typographyObserver = new MutationObserver(() => this.canvas.drawStylePanel())
     this.typographyObserver.observe(workspace, {
@@ -216,6 +476,7 @@ const FileCanvas = {
   },
   destroyed() {
     window.removeEventListener("keydown", this.zoomKey, true)
+    this.destroyLineTool?.()
     this.zoomObserver?.disconnect()
     this.typographyObserver?.disconnect()
     Hakushi.destroyed.call(this)

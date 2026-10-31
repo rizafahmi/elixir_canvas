@@ -1,0 +1,185 @@
+{
+  "appearance": {
+    "font": "sans"
+  },
+  "edges": [],
+  "nodes": [
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "l",
+        "stroke": "none",
+        "text": "Product Ideas",
+        "width": 2
+      },
+      "height": 67.31,
+      "id": "vjtmngd3",
+      "locked": false,
+      "type": "shape",
+      "width": 181.6,
+      "x": 554.2,
+      "y": 0.08
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": false,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "ink",
+        "to": [
+          16.8,
+          511.8
+        ],
+        "width": 2
+      },
+      "height": 523.8,
+      "id": "44qdrcdt",
+      "locked": false,
+      "type": "shape-line",
+      "width": 28.8,
+      "x": 404.05,
+      "y": 194.3
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": false,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "ink",
+        "to": [
+          16.8,
+          511.8
+        ],
+        "width": 2
+      },
+      "height": 523.8,
+      "id": "weel6o5c",
+      "locked": false,
+      "type": "shape-line",
+      "width": 28.8,
+      "x": 891.08,
+      "y": 194.3
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "red",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "Generic Idea",
+        "width": 2
+      },
+      "height": 40,
+      "id": "ehmvhrie",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 174.21,
+      "y": 174.3
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "blue",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "Plot Twist",
+        "width": 2
+      },
+      "height": 40,
+      "id": "bzgg3ap6",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 579.14,
+      "y": 174.3
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "green",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "New Idea",
+        "width": 2
+      },
+      "height": 40,
+      "id": "t6akknyq",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 1015.38,
+      "y": 174.3
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "Notes app",
+        "width": 2
+      },
+      "height": 40,
+      "id": "4itndoin",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 166,
+      "y": 275.6
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "for lazy note taker",
+        "width": 2
+      },
+      "height": 40,
+      "id": "fe4c5pim",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 579.14,
+      "y": 275.6
+    }
+  ],
+  "version": 1
+}

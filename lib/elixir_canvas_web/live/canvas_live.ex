@@ -363,8 +363,12 @@ defmodule ElixirCanvasWeb.CanvasLive do
             <dd>T · R · O</dd>
           </div>
           <div>
-            <dt>Arrow · select</dt>
-            <dd>A · V</dd>
+            <dt>Line · arrow · select</dt>
+            <dd>L · A · V</dd>
+          </div>
+          <div>
+            <dt>Line direction · 45°</dt>
+            <dd>Shift + drag</dd>
           </div>
           <div>
             <dt>Pan</dt>

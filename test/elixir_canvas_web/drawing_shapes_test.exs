@@ -178,4 +178,45 @@ defmodule ElixirCanvasWeb.DrawingShapesTest do
       refute Map.has_key?(edited, "font")
     end
   end
+
+  test "straight lines force no arrow and retain directional endpoints without text style" do
+    cases = [
+      {{180.25, 150.75}, {-40.5, -20.25}},
+      {{180, 70}, {-40, 70}},
+      {{90, 180}, {90, -30}}
+    ]
+
+    for {{x1, y1}, {x2, y2}} <- cases do
+      node =
+        DrawingShapes.drawn(
+          "straight-line",
+          %{
+            "points" => [[x1, y1], [x2, y2]],
+            "style" => %{
+              "stroke" => "accent",
+              "width" => 4,
+              "dash" => true,
+              "arrow" => "both",
+              "font" => "mono",
+              "fill" => "red"
+            }
+          },
+          %{}
+        )
+
+      assert node.type == "shape-line"
+      assert node.width > 0 and node.height > 0
+      assert Map.keys(node.data) |> Enum.sort() == ~w(arrow dash from stroke to width)
+      assert node.data["arrow"] == "none"
+      assert node.data["stroke"] == "accent"
+      assert node.data["width"] == 4
+      assert node.data["dash"] == true
+      [fx, fy] = node.data["from"]
+      [tx, ty] = node.data["to"]
+      assert_in_delta node.x + fx, x1, 0.1
+      assert_in_delta node.y + fy, y1, 0.1
+      assert_in_delta node.x + tx, x2, 0.1
+      assert_in_delta node.y + ty, y2, 0.1
+    end
+  end
 end

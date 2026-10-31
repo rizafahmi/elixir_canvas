@@ -375,6 +375,51 @@ defmodule ElixirCanvas.DocumentTest do
     end
   end
 
+  test "a moved reverse-direction straight line preserves authored endpoints and metadata after reopening",
+       %{path: path, document: document} do
+    line = %{
+      "id" => "standalone-line",
+      "type" => "shape-line",
+      "x" => -300.25,
+      "y" => -40.5,
+      "width" => 264.25,
+      "height" => 196.5,
+      "data" => %{
+        "from" => [252.25, 12],
+        "to" => [12, 184.5],
+        "stroke" => "accent",
+        "width" => 2,
+        "dash" => false,
+        "arrow" => "none",
+        "future" => %{"intent" => "authored line"}
+      },
+      "annotation" => %{"keep" => true}
+    }
+
+    source = Map.update!(document.source, "nodes", &(&1 ++ [line]))
+    bytes = Jason.encode!(source)
+    File.write!(path, bytes)
+    assert {:ok, authored} = Document.open(path)
+    assert File.read!(path) == bytes
+
+    assert {:ok, moved, _change, _inverse} =
+             Graph.apply(authored.graph, Change.move([%{id: line["id"], x: -125.5, y: 80.25}]))
+
+    assert {:ok, saved} = Document.save(authored, moved)
+    assert {:ok, reopened} = Document.open(saved.path)
+    persisted = Graph.node(reopened.graph, line["id"])
+    assert {persisted.x, persisted.y, persisted.width, persisted.height} ==
+             {-125.5, 80.25, 264.25, 196.5}
+
+    assert persisted.data == line["data"]
+    assert reopened.graph == moved
+    assert Graph.nodes(reopened.graph) == Graph.nodes(document.graph) ++ [persisted]
+    assert reopened.graph.edges == document.graph.edges
+    saved_line = Enum.find(reopened.source["nodes"], &(&1["id"] == line["id"]))
+    assert Map.take(saved_line, Map.keys(line)) == %{line | "x" => -125.5, "y" => 80.25}
+    assert Document.status(reopened) == :unchanged
+  end
+
   test "resolved colors and unsupported names are rejected without rewriting", %{path: path} do
     original = path |> File.read!() |> Jason.decode!()
 

@@ -20,7 +20,22 @@ defmodule ElixirCanvasWeb.DrawingShapes do
   @impl true
   defdelegate resizable?(type), to: Shapes
   @impl true
-  defdelegate tools(messages), to: Shapes
+  def tools(messages) do
+    Enum.map(Shapes.tools(messages), fn
+      %{tool: "line"} = tool -> %{tool | label: "Arrow"}
+      tool -> tool
+    end) ++
+      [
+        %{
+          tool: "straight-line",
+          mode: "line",
+          label: messages["shapeLine"],
+          icon: "arrow",
+          key: "l"
+        }
+      ]
+  end
+
   @impl true
   defdelegate label(node, messages), to: Shapes
 
@@ -63,6 +78,15 @@ defmodule ElixirCanvasWeb.DrawingShapes do
       {:ok, edited |> theme_colors(style) |> typography(style)}
     end
   end
+
+  def edit(
+        "endpoints",
+        %{"from" => [x1, y1], "to" => [x2, y2], "box" => [x, y, w, h]},
+        %{"from" => _from, "to" => _to} = data
+      )
+      when is_number(x) and is_number(y) and is_number(w) and is_number(h) and w > 0 and h > 0 and
+             is_number(x1) and is_number(y1) and is_number(x2) and is_number(y2),
+      do: {:ok, Map.merge(data, %{"from" => [x1, y1], "to" => [x2, y2]})}
 
   def edit(action, params, data), do: Shapes.edit(action, params, data)
 
@@ -110,6 +134,12 @@ defmodule ElixirCanvasWeb.DrawingShapes do
   def new_node(_item, _position, _messages), do: nil
 
   @impl true
+  def drawn("straight-line", params, messages) do
+    style = params["style"] || %{}
+    style = style |> Map.take(~w(stroke width dash)) |> Map.put("arrow", "none")
+    drawn("line", Map.put(params, "style", style), messages)
+  end
+
   def drawn(tool, params, messages) do
     style = Map.merge(defaults(tool), params["style"] || %{})
 

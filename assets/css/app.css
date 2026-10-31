@@ -85,7 +85,7 @@ button:disabled { opacity: .4; cursor: default; }
 .canvas-workspace {
   --workspace-inset: 24px;
   --workspace-bottom: max(24px, env(safe-area-inset-bottom));
-  --dock-width: min(400px, calc(100vw - var(--workspace-inset) * 2));
+  --dock-width: min(438px, calc(100% - var(--workspace-inset) * 2));
   --dock-height: 52px;
   --style-width: 96px;
   --save-width: 92px;
@@ -226,16 +226,23 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
 /* Native style metadata stays named; only this renderer chooses contrast ink. */
 .hakushi-shape[data-hakushi-style*='"fill":"ink"'] .hakushi-shape-text { color: var(--hakushi-surface); }
 .hakushi-shape-outline, .hakushi-shape-line-stroke { stroke-linejoin: miter; stroke-linecap: butt; }
+.canvas-workspace .drawing-line-endpoint { width: 24px; height: 24px; padding: 0; transform: translate(-50%, -50%); border: 0; background: transparent; pointer-events: auto; touch-action: none; cursor: move; -webkit-user-select: none; user-select: none; }
+.drawing-line-endpoint::after { content: ""; display: block; width: 10px; height: 10px; margin: auto; border: 1.5px solid var(--hakushi-selection); background: var(--hakushi-surface); }
+.drawing-line-endpoint[hidden] { display: none; }
+.drawing-line-endpoint:focus-visible { outline: var(--focus-ring); outline-offset: 0; }
+.drawing-line-editing .hakushi-shape-line { visibility: hidden; }
+.canvas-workspace .hakushi-node[data-type="shape-line"][data-ui-selected] { box-shadow: none; outline: 1px solid var(--hakushi-selection); }
 
 .canvas-workspace :is(.hakushi-tools, .hakushi-controls, .hakushi-paper-menu) { border: var(--border-frame); border-radius: 0; box-shadow: none; }
 /* Native action buttons stay connected to Hakushi inside the app's grouping. */
-.canvas-workspace .hakushi-tools { top: auto; bottom: var(--workspace-bottom); left: calc(50% - var(--style-width) / 2); width: calc(var(--dock-width) - var(--style-width)); height: var(--dock-height); max-width: none; padding: 5px; gap: 3px; flex-wrap: nowrap; overflow-x: auto; border-right: var(--border-row); z-index: 6; }
+.canvas-workspace .hakushi-tools { top: auto; bottom: var(--workspace-bottom); left: calc(50% - var(--style-width) / 2); width: calc(var(--dock-width) - var(--style-width)); height: auto; min-height: 52px; max-width: none; padding: 5px; gap: 3px; display: grid; grid-template-columns: repeat(auto-fit, minmax(30px, 1fr)); overflow: visible; border-right: var(--border-row); z-index: 6; }
 .canvas-workspace .hakushi-controls { bottom: calc(var(--workspace-bottom) + var(--dock-height) + 16px); left: var(--workspace-inset); right: auto; display: flex; flex-direction: column; width: 58px; max-height: calc(100dvh - var(--workspace-bottom) - var(--dock-height) - 120px); overflow-y: auto; overscroll-behavior: contain; padding: 5px; gap: 0; z-index: 6; font-family: var(--font-mono); }
 .canvas-workspace .hakushi-control { flex-shrink: 0; min-width: 30px; height: 34px; padding: 0 7px; border-radius: 0; font-size: 10px; }
 .canvas-workspace .hakushi-control svg { width: 16px; height: 16px; }
-.canvas-workspace .hakushi-tools .hakushi-control { width: 38px; height: 38px; padding: 0; }
+.canvas-workspace .hakushi-tools .hakushi-control { width: 100%; min-width: 30px; height: 38px; padding: 0; }
 .canvas-workspace .hakushi-controls > .hakushi-control { width: 44px; margin-left: 0; }
 .canvas-workspace .hakushi-controls > :is([data-action="layout"], [data-action="zoom-toggle"]) { margin-top: 5px; border-top: var(--border-row); }
+.canvas-workspace .hakushi-tools .hakushi-tool-options { grid-column: 1 / -1; }
 .canvas-workspace .hakushi-controls > :is([data-action="paper"], [data-action="export"]) { position: fixed; top: var(--workspace-inset); display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border: var(--border-frame); background: var(--bg-elevated); color: var(--text-primary); font: 700 11px/1.5 var(--font-mono); z-index: 11; }
 .canvas-workspace .hakushi-controls > [data-action="paper"] { left: var(--workspace-inset); }
 .canvas-workspace .hakushi-controls > [data-action="export"] { right: calc(var(--workspace-inset) + var(--save-width) + 8px); width: var(--export-width); }
@@ -293,7 +300,7 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
   .canvas-actions svg { width: 14px; height: 14px; }
   .file-menu { top: 100px; left: 12px; width: min(390px, calc(100% - 24px)); max-height: calc(100dvh - 124px); padding: 18px; }
   .canvas-workspace .hakushi-tools { gap: 2px; }
-  .canvas-workspace .hakushi-tools .hakushi-control { width: 36px; min-width: 36px; }
+  .canvas-workspace .hakushi-tools .hakushi-control { min-width: 30px; }
   .canvas-workspace .hakushi-controls > [data-action="export"]::after { content: none; }
   .canvas-messages { top: 104px; width: calc(100% - 24px); }
   .canvas-message { padding: 10px 12px; }
@@ -303,5 +310,6 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
 @media (max-width: 380px) {
   .canvas-workspace { --style-width: 44px; }
   .drawing-dock .style-button span { display: none; }
-  .canvas-workspace .hakushi-tools .hakushi-control { width: 30px; min-width: 30px; }
+  .canvas-workspace .hakushi-tools { grid-template-columns: repeat(auto-fit, minmax(26px, 1fr)); }
+  .canvas-workspace .hakushi-tools .hakushi-control { min-width: 26px; }
 }

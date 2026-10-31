@@ -16,8 +16,9 @@ theme from portable names; the document retains its authored geometry and style 
 - **Download** exports an image beside **Save** at the upper right; Save writes
   the source JSON. Download becomes icon-only on narrow screens.
 - Drawing tools and **Style** share the bottom dock, separated by a divider.
-  The inspector opens above its end of the dock, not over the drawing tools.
-  Style becomes icon-only on the smallest screens so every drawing tool fits.
+  **Line** (`L`) has a plain segment icon; **Arrow** (`A`) keeps its arrow icon.
+  The inspector opens above the dock, not over the drawing tools. Style becomes
+  icon-only on the smallest screens; all eight tool buttons remain visible at 320px.
 - Undo and redo stay at the top of the left rail. The live zoom percentage below
   them opens a popover with zoom out/in, Fit to screen, and Reset to 100%.
   Repeated adjustments keep it open; Escape or an outside click closes it.
@@ -85,10 +86,19 @@ IPv4 loopback. This is not a hosted multi-user application.
 
 ## Edit
 
-- Use the canvas toolbar for rectangles, ellipses, diamonds, triangles, text,
-  and lines. Drag between shape handles to create a connected arrow.
-- Double-click a shape to edit its text. Select it to resize or rotate it; open
-  **Style** to change its appearance.
+- Use the canvas toolbar for rectangles, ellipses, diamonds, triangles, and text.
+  **Line** (`L`) draws a standalone straight segment without arrowheads, even when
+  drawn between shapes. Hold **Shift** while drawing to snap its direction to
+  45° increments (horizontal, vertical, or diagonal); release Shift to draw freely.
+  **Arrow** (`A`) keeps the existing behavior: it connects shapes when drawn
+  between them and creates a standalone arrow elsewhere.
+  Dragging between shape handles also creates a connected arrow.
+- Select a standalone line or arrow to drag either endpoint; the opposite endpoint
+  stays fixed. Focus an endpoint and use the arrow keys for precise adjustments.
+  An endpoint drag is one undoable edit; Escape or a cancelled pointer gesture
+  discards its preview. Locked objects have no editable endpoint controls.
+- Double-click a text-bearing shape to edit its text. Select it to resize or
+  rotate it; open **Style** to change its appearance.
 - Pan with Space + drag; open the left rail's zoom percentage to zoom or fit the canvas.
 - With a canvas loaded, Command/Ctrl + `+` (or `=`) zooms in and Command/Ctrl + `-`
   zooms out instead of zooming the browser page. These work with the zoom popover
@@ -172,8 +182,12 @@ Supported types:
 - `shape`: `data.kind` is `rect`, `ellipse`, `diamond`, `triangle`, or `text`.
   `data.text` is embedded plain text, defaults to an empty string, and is at most
   2,000 Unicode characters, matching Hakushi's editor limit.
-- `shape-line`: a standalone line. `data.from` and `data.to` are `[x, y]` endpoint
-  pairs relative to the node's box. Connections between objects belong in `edges`.
+- `shape-line`: a standalone line or arrow. `data.from` and `data.to` are `[x, y]`
+  endpoint pairs relative to the node's box; horizontal and vertical segments
+  still have positive box dimensions. Line-tool creations explicitly save
+  `data.arrow: "none"`; existing arrow values remain unchanged by endpoint edits.
+  Standalone lines have no text or font role. Connections between objects belong
+  in `edges`.
 
 Style fields in `data` follow the Shapes kit:
 
