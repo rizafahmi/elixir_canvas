@@ -101,7 +101,10 @@ IPv4 loopback. This is not a hosted multi-user application.
   An endpoint drag is one undoable edit; Escape or a cancelled pointer gesture
   discards its preview. Locked objects have no editable endpoint controls.
 - Double-click a text-bearing shape to edit its text. Select it to resize or
-  rotate it; open **Style** to change its appearance.
+  rotate it; the selection outline, resize handles, and rotation knob follow the
+  shape while turning and after release. Resize along the shape's rotated axes;
+  the opposite corner or side stays fixed. Escape or a cancelled pointer gesture
+  discards the rotation or resize preview. Open **Style** to change its appearance.
 - Pan with Space + drag; open the left rail's zoom percentage to zoom or fit the canvas.
 - With a canvas loaded, Command/Ctrl + `+` (or `=`) zooms in and Command/Ctrl + `-`
   zooms out instead of zooming the browser page. These work with the zoom popover

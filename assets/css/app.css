@@ -180,6 +180,21 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
   --hakushi-shape-tint: 100%;
 }
 .drawing-typography { display: contents; }
+
+/* The authored node stays axis-aligned; only its single-shape guides turn. */
+.canvas-workspace .hakushi-node[data-type="shape"] > :is(.hakushi-resizer, .hakushi-rotator) { rotate: 0deg; }
+.canvas-workspace .hakushi-node.drawing-rotation-guides > :is(.hakushi-resizer, .hakushi-rotator) { rotate: var(--drawing-guide-angle, 0deg); }
+.canvas-workspace .hakushi-node.drawing-rotation-guides[data-ui-selected] { box-shadow: none; }
+.canvas-workspace .hakushi-node.drawing-rotation-guides[data-ui-selected]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  outline: 2px solid var(--hakushi-selection);
+  rotate: var(--drawing-guide-angle, 0deg);
+  pointer-events: none;
+}
+
 .canvas-workspace, .drawing-typography[data-drawing-font] {
   --canvas-text-font: var(--font-body);
   --canvas-text-weight: 400;

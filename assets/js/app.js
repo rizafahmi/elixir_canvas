@@ -3,6 +3,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {Hakushi} from "hakushi"
 import {mountSelfLoops} from "./self_loops"
+import {mountRotationGuides} from "./rotation_guides"
 
 async function loadDrawingFonts(workspace) {
   // Resolve the host's CSS mapping, not a second document-role → family registry.
@@ -378,6 +379,7 @@ const FileCanvas = {
     setFontState(workspace, "ready")
     // Keep initialization outside the font catch: a canvas error is not a font error.
     Hakushi.mounted.call(this)
+    this.destroyRotationGuides = mountRotationGuides(this.canvas)
     mountSelfLoops(this.canvas)
     this.destroyLineTool = mountLineTool(this.canvas)
     mountObjectTypography(this.canvas)
@@ -479,6 +481,7 @@ const FileCanvas = {
   destroyed() {
     window.removeEventListener("keydown", this.zoomKey, true)
     this.destroyLineTool?.()
+    this.destroyRotationGuides?.()
     this.zoomObserver?.disconnect()
     this.typographyObserver?.disconnect()
     Hakushi.destroyed.call(this)

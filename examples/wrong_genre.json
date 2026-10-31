@@ -1,0 +1,431 @@
+{
+  "appearance": {
+    "font": "sans"
+  },
+  "edges": [],
+  "nodes": [
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "accent",
+        "font": "heading",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "🎮 WRONG GENRE ONLY: BORING APP + GAME MECHANIC",
+        "width": 2
+      },
+      "height": 56,
+      "id": "s1-banner",
+      "locked": true,
+      "type": "shape",
+      "width": 860,
+      "x": 40,
+      "y": 120
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "1) Drop Boring Apps in Zone 1  ->  2) Drop Game Mechanics in Zone 2  ->  3) Connect with [A] into Zone 3!",
+        "width": 2
+      },
+      "height": 56,
+      "id": "s1-sub",
+      "locked": true,
+      "type": "shape",
+      "width": 1000,
+      "x": 920,
+      "y": 120
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "",
+        "width": 4
+      },
+      "height": 440,
+      "id": "s1-z1-frame",
+      "locked": true,
+      "type": "shape",
+      "width": 500,
+      "x": 40,
+      "y": 196
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "yellow",
+        "font": "heading",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "ZONE 1 · PICK A BORING APP",
+        "width": 2
+      },
+      "height": 44,
+      "id": "s1-z1-hdr",
+      "locked": true,
+      "type": "shape",
+      "width": 500,
+      "x": 40,
+      "y": 196
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "",
+        "width": 4
+      },
+      "height": 440,
+      "id": "s1-z2-frame",
+      "locked": true,
+      "type": "shape",
+      "width": 540,
+      "x": 580,
+      "y": 196
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "blue",
+        "font": "heading",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "ZONE 2 · ADD A GAME MECHANIC",
+        "width": 2
+      },
+      "height": 44,
+      "id": "s1-z2-hdr",
+      "locked": true,
+      "type": "shape",
+      "width": 540,
+      "x": 580,
+      "y": 196
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "",
+        "width": 4
+      },
+      "height": 440,
+      "id": "s1-z3-frame",
+      "locked": true,
+      "type": "shape",
+      "width": 760,
+      "x": 1160,
+      "y": 196
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "accent",
+        "font": "heading",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "ZONE 3 · THE 'WRONG GENRE' BABY",
+        "width": 2
+      },
+      "height": 44,
+      "id": "s1-z3-hdr",
+      "locked": true,
+      "type": "shape",
+      "width": 760,
+      "x": 1160,
+      "y": 196
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "[Boring App #1]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z1-c1",
+      "locked": false,
+      "type": "shape",
+      "width": 220,
+      "x": 60,
+      "y": 260
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "[Boring App #2]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z1-c2",
+      "locked": false,
+      "type": "shape",
+      "width": 220,
+      "x": 300,
+      "y": 260
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "[Boring App #3]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z1-c3",
+      "locked": false,
+      "type": "shape",
+      "width": 220,
+      "x": 60,
+      "y": 416
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "[Boring App #4]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z1-c4",
+      "locked": false,
+      "type": "shape",
+      "width": 220,
+      "x": 300,
+      "y": 416
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "Ask Chat: \"Name a boring everyday utility app on your phone!\"",
+        "width": 2
+      },
+      "height": 48,
+      "id": "s1-z1-foot",
+      "locked": false,
+      "type": "shape",
+      "width": 460,
+      "x": 60,
+      "y": 568
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "[Game Mechanic #1]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z2-c1",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 600,
+      "y": 260
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "[Game Mechanic #2]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z2-c2",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 860,
+      "y": 260
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "[Game Mechanic #3]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z2-c3",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 600,
+      "y": 416
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "[Game Mechanic #4]",
+        "width": 2
+      },
+      "height": 136,
+      "id": "s1-z2-c4",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 860,
+      "y": 416
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "Ask Chat: \"Drop an iconic video game rule (PUBG, Tamagotchi, Dark Souls, Gacha)!\"",
+        "width": 2
+      },
+      "height": 48,
+      "id": "s1-z2-foot",
+      "locked": false,
+      "type": "shape",
+      "width": 500,
+      "x": 600,
+      "y": 568
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "none",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "[ Smash 1 Boring App + 1 Game Mechanic Here! ]\n\nWhat happens when a boring adult chore\nhas to obey video game physics?",
+        "width": 2
+      },
+      "height": 356,
+      "id": "s1-z3-empty",
+      "locked": false,
+      "type": "shape",
+      "width": 720,
+      "x": 1180,
+      "y": 260
+    }
+  ],
+  "paper": {
+    "background": "cross",
+    "grid": 20
+  },
+  "version": 1
+}

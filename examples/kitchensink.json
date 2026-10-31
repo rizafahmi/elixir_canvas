@@ -1,0 +1,949 @@
+{
+  "appearance": {
+    "font": "sans"
+  },
+  "edges": [
+    {
+      "animated": false,
+      "data": {},
+      "id": "step1-rect:right->step2-ellipse:left",
+      "label": "1 → 2 (bezier + arrow)",
+      "marker": "arrow",
+      "path": "bezier",
+      "source": "step1-rect",
+      "source_handle": "right",
+      "target": "step2-ellipse",
+      "target_handle": "left"
+    },
+    {
+      "animated": true,
+      "data": {},
+      "id": "step2-ellipse:right->step3-diamond:left",
+      "label": "2 → 3 (smooth + animated)",
+      "marker": "arrow",
+      "path": "smooth",
+      "source": "step2-ellipse",
+      "source_handle": "right",
+      "target": "step3-diamond",
+      "target_handle": "left"
+    },
+    {
+      "animated": false,
+      "data": {},
+      "id": "step3-diamond:right->step4-triangle:left",
+      "label": "3 → 4 (step + dot)",
+      "marker": "dot",
+      "path": "step",
+      "source": "step3-diamond",
+      "source_handle": "right",
+      "target": "step4-triangle",
+      "target_handle": "left"
+    },
+    {
+      "animated": false,
+      "data": {},
+      "id": "step1-rect:bottom->step1-rounded:top",
+      "label": "straight + none",
+      "marker": "none",
+      "path": "straight",
+      "source": "step1-rect",
+      "source_handle": "bottom",
+      "target": "step1-rounded",
+      "target_handle": "top"
+    },
+    {
+      "animated": true,
+      "data": {},
+      "id": "step3-diamond:top->step3-diamond:bottom",
+      "label": "Self-loop (top → bottom)",
+      "marker": "arrow",
+      "path": "bezier",
+      "source": "step3-diamond",
+      "source_handle": "top",
+      "target": "step3-diamond",
+      "target_handle": "bottom"
+    },
+    {
+      "animated": false,
+      "data": {},
+      "id": "font-sans:right->font-heading:left",
+      "marker": "arrow",
+      "path": "straight",
+      "source": "font-sans",
+      "source_handle": "right",
+      "target": "font-heading",
+      "target_handle": "left"
+    },
+    {
+      "animated": false,
+      "data": {},
+      "id": "font-heading:right->font-mono:left",
+      "marker": "arrow",
+      "path": "straight",
+      "source": "font-heading",
+      "source_handle": "right",
+      "target": "font-mono",
+      "target_handle": "left"
+    },
+    {
+      "animated": false,
+      "data": {},
+      "id": "font-mono:right->font-handwritten:left",
+      "marker": "arrow",
+      "path": "straight",
+      "source": "font-mono",
+      "source_handle": "right",
+      "target": "font-handwritten",
+      "target_handle": "left"
+    }
+  ],
+  "nodes": [
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "l",
+        "stroke": "none",
+        "text": "ELIXIR CANVAS — KITCHEN SINK TUTORIAL",
+        "width": 2
+      },
+      "height": 56,
+      "id": "hero-title",
+      "locked": false,
+      "type": "shape",
+      "width": 920,
+      "x": 40,
+      "y": 20
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "none",
+        "text": "Learn every drawing tool, shape kind, connector path, line marker, typography role, and palette swatch on one interactive board.",
+        "width": 2
+      },
+      "height": 44,
+      "id": "hero-subtitle",
+      "locked": false,
+      "type": "shape",
+      "width": 1160,
+      "x": 40,
+      "y": 84
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": false,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "ink",
+        "to": [
+          1372,
+          12
+        ],
+        "width": 4
+      },
+      "height": 24,
+      "id": "divider-top",
+      "locked": false,
+      "type": "shape-line",
+      "width": 1384,
+      "x": 28,
+      "y": 136
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "accent",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "PART 1 · CORE SHAPE TOOLS (R · O · D · TRIANGLE · T)",
+        "width": 2
+      },
+      "height": 40,
+      "id": "sec1-header",
+      "locked": false,
+      "type": "shape",
+      "width": 660,
+      "x": 40,
+      "y": 176
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "green",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "1. Rectangle [R]\nDrag to draw a box.\nSharp corners (radius: 0),\nsolid 2px ink border.",
+        "width": 2
+      },
+      "height": 120,
+      "id": "step1-rect",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 40,
+      "y": 240
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": true,
+        "fill": "yellow",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 8,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "violet",
+        "text": "Rounded & Dashed Variant\nradius: 8 · dash: true · width: 4",
+        "width": 4
+      },
+      "height": 90,
+      "id": "step1-rounded",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 40,
+      "y": 420
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "blue",
+        "font": "sans",
+        "kind": "ellipse",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "blue",
+        "text": "2. Ellipse [O]\nHold Shift for a circle.\nGreat for states & start/end.",
+        "width": 2
+      },
+      "height": 120,
+      "id": "step2-ellipse",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 380,
+      "y": 240
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "violet",
+        "font": "sans",
+        "kind": "diamond",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "3. Diamond [D]\nDecision node +\nself-loop above!",
+        "width": 2
+      },
+      "height": 140,
+      "id": "step3-diamond",
+      "locked": false,
+      "type": "shape",
+      "width": 240,
+      "x": 720,
+      "y": 230
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "red",
+        "font": "sans",
+        "kind": "triangle",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "red",
+        "text": "4. Triangle\nPick from dock\nfor warnings/deltas",
+        "width": 2
+      },
+      "height": 130,
+      "id": "step4-triangle",
+      "locked": false,
+      "type": "shape",
+      "width": 220,
+      "x": 1060,
+      "y": 235
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "handwritten",
+        "kind": "text",
+        "radius": 0,
+        "rotation": -4,
+        "size": "l",
+        "stroke": "none",
+        "text": "5. Text Tool [T] — Click anywhere to type! Double-click any shape to edit its label. (Rotated -4°)",
+        "width": 2
+      },
+      "height": 80,
+      "id": "step5-text",
+      "locked": false,
+      "type": "shape",
+      "width": 560,
+      "x": 380,
+      "y": 420
+    },
+    {
+      "data": {
+        "align": "right",
+        "dash": true,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 6,
+        "size": "s",
+        "stroke": "gray",
+        "text": "Rotated Box (+6°)\nRight-aligned text\nLocked: false (drag top knob!)",
+        "width": 1
+      },
+      "height": 90,
+      "id": "step5-rotated",
+      "locked": false,
+      "type": "shape",
+      "width": 280,
+      "x": 1000,
+      "y": 420
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": true,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "gray",
+        "to": [
+          1372,
+          12
+        ],
+        "width": 1
+      },
+      "height": 24,
+      "id": "divider-mid1",
+      "locked": false,
+      "type": "shape-line",
+      "width": 1384,
+      "x": 28,
+      "y": 540
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "accent",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "PART 2 · STANDALONE LINES [L] vs ARROWS [A] (shape-line)",
+        "width": 2
+      },
+      "height": 40,
+      "id": "sec2-header",
+      "locked": false,
+      "type": "shape",
+      "width": 720,
+      "x": 40,
+      "y": 576
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "mono",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "none",
+        "text": "6a. Straight Line [L] → arrow: \"none\", width: 2, solid (Hold Shift while dragging for 45° snap)",
+        "width": 2
+      },
+      "height": 32,
+      "id": "line-label-1",
+      "locked": false,
+      "type": "shape",
+      "width": 620,
+      "x": 40,
+      "y": 630
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": false,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "ink",
+        "to": [
+          572,
+          12
+        ],
+        "width": 2
+      },
+      "height": 24,
+      "id": "line-demo-none",
+      "locked": false,
+      "type": "shape-line",
+      "width": 584,
+      "x": 40,
+      "y": 666
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "mono",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "none",
+        "text": "6b. Freehand Arrow [A] → arrow: \"end\", width: 4, stroke: \"blue\"",
+        "width": 2
+      },
+      "height": 32,
+      "id": "line-label-2",
+      "locked": false,
+      "type": "shape",
+      "width": 620,
+      "x": 40,
+      "y": 706
+    },
+    {
+      "data": {
+        "arrow": "end",
+        "dash": false,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "blue",
+        "to": [
+          572,
+          12
+        ],
+        "width": 4
+      },
+      "height": 24,
+      "id": "line-demo-end",
+      "locked": false,
+      "type": "shape-line",
+      "width": 584,
+      "x": 40,
+      "y": 742
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "font": "mono",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "none",
+        "text": "6c. Bi-directional Dashed Line → arrow: \"both\", dash: true, width: 2, stroke: \"red\"",
+        "width": 2
+      },
+      "height": 32,
+      "id": "line-label-3",
+      "locked": false,
+      "type": "shape",
+      "width": 640,
+      "x": 700,
+      "y": 630
+    },
+    {
+      "data": {
+        "arrow": "both",
+        "dash": true,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "red",
+        "to": [
+          592,
+          12
+        ],
+        "width": 2
+      },
+      "height": 24,
+      "id": "line-demo-both",
+      "locked": false,
+      "type": "shape-line",
+      "width": 604,
+      "x": 700,
+      "y": 666
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "Pro Tip: Select any standalone line to reveal draggable start/end handles (or nudge endpoints with Arrow keys!). Dragging [A] between two shapes creates a connected graph Edge instead.",
+        "width": 1
+      },
+      "height": 68,
+      "id": "line-pro-tip",
+      "locked": false,
+      "type": "shape",
+      "width": 640,
+      "x": 700,
+      "y": 706
+    },
+    {
+      "data": {
+        "arrow": "none",
+        "dash": true,
+        "from": [
+          12,
+          12
+        ],
+        "stroke": "gray",
+        "to": [
+          1372,
+          12
+        ],
+        "width": 1
+      },
+      "height": 24,
+      "id": "divider-mid2",
+      "locked": false,
+      "type": "shape-line",
+      "width": 1384,
+      "x": 28,
+      "y": 800
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "accent",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "PART 3 · TYPOGRAPHY ROLES & SIZES (S · M · L)",
+        "width": 2
+      },
+      "height": 40,
+      "id": "sec3-header",
+      "locked": false,
+      "type": "shape",
+      "width": 640,
+      "x": 40,
+      "y": 836
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "sans",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "ink",
+        "text": "font: \"sans\" (Normal)\nMona Sans 400 / 700\nClean UI & body copy",
+        "width": 2
+      },
+      "height": 104,
+      "id": "font-sans",
+      "locked": false,
+      "type": "shape",
+      "width": 280,
+      "x": 40,
+      "y": 896
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "heading",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "font: \"heading\" (Title)\nUnbounded 800\nBold display headers",
+        "width": 2
+      },
+      "height": 104,
+      "id": "font-heading",
+      "locked": false,
+      "type": "shape",
+      "width": 300,
+      "x": 380,
+      "y": 896
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "font: \"mono\" (Code)\nMonaspace Neon 400/700\nSpecs, IDs & metrics",
+        "width": 2
+      },
+      "height": 104,
+      "id": "font-mono",
+      "locked": false,
+      "type": "shape",
+      "width": 300,
+      "x": 740,
+      "y": 896
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "handwritten",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "l",
+        "stroke": "ink",
+        "text": "font: \"handwritten\"\nAmatic SC 700 — Sketch notes!",
+        "width": 2
+      },
+      "height": 104,
+      "id": "font-handwritten",
+      "locked": false,
+      "type": "shape",
+      "width": 300,
+      "x": 1100,
+      "y": 896
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "accent",
+        "font": "heading",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "PART 4 · PORTABLE COLOR SWATCHES & CANVAS CONTROLS",
+        "width": 2
+      },
+      "height": 40,
+      "id": "sec4-header",
+      "locked": false,
+      "type": "shape",
+      "width": 720,
+      "x": 40,
+      "y": 1036
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "none",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "fill: none\nstroke: ink",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-none",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 40,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "ink",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "fill: ink",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-ink",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 176,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "gray",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "gray",
+        "text": "fill: gray",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-gray",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 312,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "blue",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "blue",
+        "text": "fill: blue",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-blue",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 448,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "green",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "green",
+        "text": "fill: green",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-green",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 584,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "yellow",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "yellow",
+        "text": "fill: yellow",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-yellow",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 720,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "red",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "red",
+        "text": "fill: red",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-red",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 856,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "violet",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "violet",
+        "text": "fill: violet",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-violet",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 992,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "accent",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "accent",
+        "text": "fill: accent",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-accent",
+      "locked": false,
+      "type": "shape",
+      "width": 124,
+      "x": 1128,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "center",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "surface",
+        "text": "fill: surface",
+        "width": 2
+      },
+      "height": 68,
+      "id": "swatch-surface",
+      "locked": false,
+      "type": "shape",
+      "width": 136,
+      "x": 1264,
+      "y": 1096
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "surface",
+        "font": "mono",
+        "kind": "rect",
+        "radius": 0,
+        "rotation": 0,
+        "size": "s",
+        "stroke": "ink",
+        "text": "LOCKED REFERENCE CARD (locked: true) — Try dragging or deleting me! I stay pinned in place.\nShortcuts: [V] Select · [R] Rect · [O] Ellipse · [D] Diamond · [T] Text · [A] Arrow · [L] Line · [Space+Drag] Pan · [⌘S] Save",
+        "width": 2
+      },
+      "height": 76,
+      "id": "locked-cheatsheet",
+      "locked": true,
+      "type": "shape",
+      "width": 1360,
+      "x": 40,
+      "y": 1188
+    }
+  ],
+  "paper": {
+    "background": "dots",
+    "grid": 20
+  },
+  "version": 1
+}
