@@ -126,9 +126,20 @@ defmodule ElixirCanvasWeb.CanvasLive do
     {:noreply, assign(socket, :disk_status, status)}
   end
 
-  defp accept_change(_change, %{result: graph}) do
-    send(self(), {:canvas_changed, graph})
-    :ok
+  defp accept_change(change, %{result: graph}) do
+    invalid =
+      change.op in [:add, :connect, :reconnect] and
+        Enum.any?(change.edges, fn changed ->
+          edge = Map.get(graph.edges, changed.id)
+          edge && edge.source == edge.target && edge.source_handle == edge.target_handle
+        end)
+
+    if invalid do
+      {:error, "Choose a different connection handle on this item."}
+    else
+      send(self(), {:canvas_changed, graph})
+      :ok
+    end
   end
 
   defp load_document(socket, path) do
@@ -221,6 +232,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
           id={"board-#{@generation}"}
           graph={@graph}
           kits={[DrawingShapes]}
+          rules={[loops: true]}
           on_change={&accept_change/2}
           background={:none}
           papers={true}

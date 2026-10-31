@@ -2,6 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {Hakushi} from "hakushi"
+import {mountSelfLoops} from "./self_loops"
 
 async function loadDrawingFonts(workspace) {
   // Resolve the host's CSS mapping, not a second document-role → family registry.
@@ -377,6 +378,7 @@ const FileCanvas = {
     setFontState(workspace, "ready")
     // Keep initialization outside the font catch: a canvas error is not a font error.
     Hakushi.mounted.call(this)
+    mountSelfLoops(this.canvas)
     this.destroyLineTool = mountLineTool(this.canvas)
     mountObjectTypography(this.canvas)
     this.typographyObserver = new MutationObserver(() => this.canvas.drawStylePanel())

@@ -93,6 +93,9 @@ IPv4 loopback. This is not a hosted multi-user application.
   **Arrow** (`A`) keeps the existing behavior: it connects shapes when drawn
   between them and creates a standalone arrow elsewhere.
   Dragging between shape handles also creates a connected arrow.
+  To loop back to the same shape, drag between two different side handles.
+  The connected arrow curves outside the shape and returns to its target handle;
+  returning to the same handle does not create an edge.
 - Select a standalone line or arrow to drag either endpoint; the opposite endpoint
   stays fixed. Focus an endpoint and use the arrow keys for precise adjustments.
   An endpoint drag is one undoable edit; Escape or a cancelled pointer gesture
@@ -221,6 +224,11 @@ Endpoints reference existing node IDs. Optional fields:
 - `label`: string or null.
 - `animated`: boolean, default false.
 - `data`: an application metadata object, default `{}`.
+
+Self-loop edges use the same node ID for `source` and `target` and distinct named
+side handles, for example `source_handle: "right"` and `target_handle: "top"`.
+They remain ordinary edges in the version-1 format; no extra node or routing
+metadata is required. Their exterior curve is computed by the renderer.
 
 Node IDs are unique among nodes; edge IDs are unique among edges. Duplicate IDs
 and dangling connections are errors, not instructions to generate replacements.

@@ -274,6 +274,51 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert node_box(view, board_id(view), "line") == {-150, 108, 194.4, 148.8}
   end
 
+  test "same-node arrows require different named handles and survive undo and saving", %{
+    view: view,
+    path: path
+  } do
+    board = board_id(view)
+    initial_edges = CanvasTest.edges(view, board)
+
+    for handle <- ~w(top right bottom left) do
+      assert {:error, _reason} =
+               CanvasTest.connect(view, board, {"idea", handle}, {"idea", handle})
+    end
+
+    assert CanvasTest.edges(view, board) == initial_edges
+    assert has_element?(view, "[data-dirty=false]")
+
+    assert :ok = CanvasTest.connect(view, board, {"idea", "right"}, {"idea", "top"})
+    [loop] = CanvasTest.edges(view, board) -- initial_edges
+    assert {loop.source, loop.source_handle, loop.target, loop.target_handle} ==
+             {"idea", "right", "idea", "top"}
+
+    assert {:error, _reason} =
+             CanvasTest.reconnect(view, board, loop.id, target: {"idea", "right"})
+
+    assert loop in CanvasTest.edges(view, board)
+    assert :ok = CanvasTest.undo(view, board)
+    assert CanvasTest.edges(view, board) == initial_edges
+    assert has_element?(view, "[data-dirty=false]")
+    assert :ok = CanvasTest.redo(view, board)
+    assert loop in CanvasTest.edges(view, board)
+
+    render_click(view, "save")
+    assert {:ok, saved} = Document.open(path)
+    saved_loop = Graph.edge(saved.graph, loop.id)
+    assert {saved_loop.source, saved_loop.source_handle, saved_loop.target,
+            saved_loop.target_handle} == {"idea", "right", "idea", "top"}
+
+    render_click(view, "reload")
+    board = board_id(view)
+    assert loop in CanvasTest.edges(view, board)
+    assert :ok = CanvasTest.remove(view, board, edges: [loop.id])
+    refute Enum.any?(CanvasTest.edges(view, board), &(&1.id == loop.id))
+    assert :ok = CanvasTest.undo(view, board)
+    assert loop in CanvasTest.edges(view, board)
+  end
+
   defp board_id(view) do
     view
     |> render()

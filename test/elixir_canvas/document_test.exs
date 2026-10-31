@@ -33,6 +33,53 @@ defmodule ElixirCanvas.DocumentTest do
     assert Document.status(saved) == :unchanged
   end
 
+  test "a self-loop retains distinct handles and metadata through move, undo, save, and reload",
+       %{document: document} do
+    edge = %{
+      id: "idea-loop",
+      source: "idea",
+      source_handle: "right",
+      target: "idea",
+      target_handle: "top",
+      path: :bezier,
+      label: "Try again",
+      data: %{"stroke" => "violet", "review" => %{"approved" => true}}
+    }
+
+    rules = Hakushi.Rules.new(loops: true)
+
+    {:ok, connected, _, disconnect} =
+      Hakushi.Commit.check_and_apply(document.graph, Change.connect(edge), rules)
+
+    original_edge = Graph.edge(connected, "idea-loop")
+    original_node = Graph.node(connected, "idea")
+
+    {:ok, moved, _, undo_move} =
+      Graph.apply(connected, Change.move([%{id: "idea", x: 425, y: -80, width: 320, height: 190}]))
+
+    assert Graph.edge(moved, "idea-loop") == original_edge
+    {:ok, restored, _, redo_move} = Graph.apply(moved, undo_move)
+    assert Graph.node(restored, "idea") == original_node
+    assert Graph.edge(restored, "idea-loop") == original_edge
+    {:ok, moved_again, _, _} = Graph.apply(restored, redo_move)
+
+    {:ok, saved} = Document.save(document, moved_again)
+    {:ok, reopened} = Document.open(saved.path)
+    loop = Graph.edge(reopened.graph, "idea-loop")
+
+    assert loop == original_edge
+    assert {loop.source, loop.source_handle, loop.target, loop.target_handle} ==
+             {"idea", "right", "idea", "top"}
+
+    node = Graph.node(reopened.graph, "idea")
+    assert {node.x, node.y, node.width, node.height} == {425, -80, 320, 190}
+
+    {:ok, disconnected, _, reconnect} = Graph.apply(reopened.graph, disconnect)
+    refute Graph.edge(disconnected, "idea-loop")
+    {:ok, reconnected, _, _} = Graph.apply(disconnected, reconnect)
+    assert Graph.edge(reconnected, "idea-loop") == original_edge
+  end
+
   test "a stale save cannot overwrite external content and can recover by reopening", %{
     path: path,
     document: document
