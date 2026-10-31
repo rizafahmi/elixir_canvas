@@ -178,6 +178,9 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
   --hakushi-shape-accent: var(--hl-acid);
   --hakushi-shape-surface: var(--bg-surface);
   --hakushi-shape-tint: 100%;
+}
+.drawing-typography { display: contents; }
+.canvas-workspace, .drawing-typography[data-drawing-font] {
   --canvas-text-font: var(--font-body);
   --canvas-text-weight: 400;
   --canvas-text-weight-large: 700;
@@ -187,17 +190,17 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
   --canvas-text-leading: 1.3;
   --canvas-text-tracking: 0;
 }
-.canvas-workspace[data-drawing-font="heading"] {
+:is(.canvas-workspace, .drawing-typography)[data-drawing-font="heading"] {
   --canvas-text-font: var(--font-display);
   --canvas-text-weight: 800;
   --canvas-text-weight-large: 800;
 }
-.canvas-workspace[data-drawing-font="mono"] {
+:is(.canvas-workspace, .drawing-typography)[data-drawing-font="mono"] {
   --canvas-text-font: var(--font-mono);
   --canvas-text-weight: 400;
   --canvas-text-weight-large: 700;
 }
-.canvas-workspace[data-drawing-font="handwritten"] {
+:is(.canvas-workspace, .drawing-typography)[data-drawing-font="handwritten"] {
   --canvas-text-font: "Amatic SC", cursive;
   --canvas-text-weight: 700;
   --canvas-text-weight-large: 700;

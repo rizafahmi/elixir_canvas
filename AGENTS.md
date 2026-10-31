@@ -19,6 +19,9 @@ body, display, and mono CSS tokens; handwritten uses separately bundled Amatic S
 700. Drawing sans/mono stay 400 with large emphasis 700; headings stay 800.
 Preserve authored geometry and corner choices. Wait for the resolved drawing
 font before canvas measurement or editing.
+Shapes may store a generic `data.font` override; absent means document default.
+The inspector shows the effective role; selecting a style saves an explicit role.
+Typography changes do not resize authored boxes; editors and exports honor each role.
 No npm installation is required to run the application.
 
 Run locally with `mix phx.server`. Verify visual changes in the actual editor,

@@ -323,16 +323,18 @@ defmodule ElixirCanvasWeb.CanvasLive do
         </div>
         <div :if={@document} class="menu-section">
           <form id="appearance-form" phx-change="appearance">
-            <label class="field-label" for="drawing-font">Drawing lettering</label>
-            <select id="drawing-font" name="font">
-              <option value="sans" selected={@drawing_font == "sans"}>Body · Sans-serif</option>
-              <option value="heading" selected={@drawing_font == "heading"}>Heading</option>
-              <option value="mono" selected={@drawing_font == "mono"}>Monospace</option>
+            <label class="field-label" for="drawing-font">Default text style</label>
+            <select id="drawing-font" name="font" aria-describedby="drawing-font-help">
+              <option value="sans" selected={@drawing_font == "sans"}>Normal</option>
+              <option value="heading" selected={@drawing_font == "heading"}>Title</option>
+              <option value="mono" selected={@drawing_font == "mono"}>Code</option>
               <option value="handwritten" selected={@drawing_font == "handwritten"}>
                 Handwritten
               </option>
             </select>
-            <p class="menu-footnote">Applies to all text in this file. Save to keep the choice.</p>
+            <p id="drawing-font-help" class="menu-footnote">
+              Used by text without its own style. Save to keep it.
+            </p>
           </form>
           <button
             id="reload-file"

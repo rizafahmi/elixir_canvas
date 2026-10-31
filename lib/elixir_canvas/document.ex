@@ -5,6 +5,7 @@ defmodule ElixirCanvas.Document do
   Hakushi owns graph operations; this module owns the portable file contract.
   Unknown fields are retained when supported objects are edited and saved.
   Appearance metadata is optional; omitted fonts retain the generic sans role.
+  Shapes may override that default with a portable data.font role; omission inherits.
   Newly created canvases explicitly select sans. Interfaces resolve roles and colors.
   """
 
@@ -12,6 +13,7 @@ defmodule ElixirCanvas.Document do
 
   defstruct [:path, :revision, :graph, source: %{}]
 
+  @font_roles ~w(sans heading mono handwritten)
   @node_fields ~w(id type x y width height data locked parent)
   @edge_fields ~w(id source source_handle target target_handle path label marker animated data)
 
@@ -210,19 +212,29 @@ defmodule ElixirCanvas.Document do
   defp validate_shape(id, data) do
     text = Map.get(data, "text", "")
 
-    if data["kind"] in ~w(rect ellipse diamond triangle text) and
-         is_binary(text) and String.length(text) <= 2_000 do
-      validate_style(id, data)
-    else
-      {:error, "Shape #{id} needs a supported kind and string text of at most 2000 characters."}
+    cond do
+      data["kind"] not in ~w(rect ellipse diamond triangle text) or
+        not is_binary(text) or String.length(text) > 2_000 ->
+        {:error, "Shape #{id} needs a supported kind and string text of at most 2000 characters."}
+
+      Map.has_key?(data, "font") and data["font"] not in @font_roles ->
+        {:error, "Shape #{id} font must be sans, heading, mono, or handwritten."}
+
+      true ->
+        validate_style(id, data)
     end
   end
 
   defp validate_line(id, data) do
-    if point?(data["from"]) and point?(data["to"]) do
-      validate_style(id, data)
-    else
-      {:error, "Line #{id} needs from and to coordinate pairs."}
+    cond do
+      not point?(data["from"]) or not point?(data["to"]) ->
+        {:error, "Line #{id} needs from and to coordinate pairs."}
+
+      Map.has_key?(data, "font") ->
+        {:error, "Line #{id} cannot have a font; lines have no text."}
+
+      true ->
+        validate_style(id, data)
     end
   end
 
@@ -274,7 +286,7 @@ defmodule ElixirCanvas.Document do
 
   defp validate_appearance({:ok, %{} = appearance}) do
     if not Map.has_key?(appearance, "font") or
-         appearance["font"] in ~w(sans heading mono handwritten) do
+         appearance["font"] in @font_roles do
       :ok
     else
       {:error, "Appearance font must be sans, heading, mono, or handwritten."}

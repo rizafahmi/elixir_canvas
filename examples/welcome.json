@@ -15,11 +15,11 @@
       "data": {
         "align": "center",
         "dash": false,
-        "fill": "yellow",
+        "fill": "green",
         "kind": "rect",
-        "radius": 8,
+        "radius": 0,
         "rotation": 0,
-        "size": "m",
+        "size": "s",
         "stroke": "violet",
         "text": "Something special here",
         "width": 4
@@ -37,6 +37,7 @@
         "align": "center",
         "dash": false,
         "fill": "none",
+        "font": "sans",
         "kind": "ellipse",
         "radius": 8,
         "rotation": 0,
@@ -79,21 +80,22 @@
         "align": "center",
         "dash": false,
         "fill": "none",
+        "font": "heading",
         "kind": "text",
         "radius": 0,
         "rotation": 0,
         "size": "m",
         "stroke": "none",
-        "text": "tesxt",
+        "text": "Title Over Here",
         "width": 2
       },
-      "height": 40,
+      "height": 55.74,
       "id": "fjn34mxi",
       "locked": false,
       "type": "shape",
-      "width": 180,
-      "x": 455.63,
-      "y": 142.68
+      "width": 181.48,
+      "x": 384.97,
+      "y": -271.62
     }
   ],
   "paper": {

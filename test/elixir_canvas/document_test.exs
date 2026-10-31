@@ -183,11 +183,14 @@ defmodule ElixirCanvas.DocumentTest do
           false,
           %{"font" => nil},
           %{"font" => ""},
+          %{"font" => "inherit"},
           %{"font" => "serif"},
           %{"font" => "Sans"},
           %{"font" => "Schibsted Grotesk"},
+          %{"font" => "Mona Sans"},
           %{"font" => "Unbounded"},
           %{"font" => "Martian Mono"},
+          %{"font" => "Monaspace Neon"},
           %{"font" => "Amatic SC"},
           %{"font" => "body"},
           %{"font" => "monospace"},
@@ -243,6 +246,132 @@ defmodule ElixirCanvas.DocumentTest do
       end
 
       assert Document.drawing_font(reopened) == font
+    end
+  end
+
+  test "mixed object roles roundtrip without materializing inherited fonts or altering geometry",
+       %{
+         path: path
+       } do
+    original = path |> File.read!() |> Jason.decode!()
+    [template | _] = original["nodes"]
+
+    nodes =
+      for {kind, index} <- Enum.with_index(~w(rect ellipse diamond triangle text)) do
+        font = Enum.at([nil, "sans", "heading", "mono", "handwritten"], index)
+
+        node =
+          template
+          |> Map.merge(%{"id" => "role-#{index}", "x" => -125.5 + index * 270, "width" => 301.25})
+          |> put_in(["data", "kind"], kind)
+          |> put_in(["data", "rotation"], 17)
+          |> put_in(["data", "future"], %{"intent" => "portable"})
+
+        if font, do: put_in(node, ["data", "font"], font), else: node
+      end
+
+    source =
+      original
+      |> Map.put("nodes", nodes)
+      |> Map.put("edges", [])
+      |> Map.put("appearance", %{"font" => "handwritten", "future" => %{"keep" => true}})
+
+    File.write!(path, Jason.encode!(source))
+    assert {:ok, document} = Document.open(path)
+    assert {:ok, _saved} = Document.save(document, document.graph)
+    assert {:ok, reopened} = Document.open(path)
+    assert reopened.graph == document.graph
+    assert reopened.source["appearance"] == source["appearance"]
+
+    for {saved, authored} <- Enum.zip(reopened.source["nodes"], nodes) do
+      assert Map.take(saved, Map.keys(authored)) == authored
+    end
+
+    refute Map.has_key?(Graph.node(reopened.graph, "role-0").data, "font")
+    assert Graph.node(reopened.graph, "role-1").data["font"] == "sans"
+  end
+
+  test "removing an object override survives saving and reopening without restoring the old font",
+       %{
+         path: path
+       } do
+    source =
+      path
+      |> File.read!()
+      |> Jason.decode!()
+      |> Map.put("appearance", %{"font" => "mono"})
+      |> put_in(["nodes", Access.at(0), "data", "font"], "heading")
+      |> put_in(["nodes", Access.at(0), "data", "future"], %{"keep" => true})
+
+    File.write!(path, Jason.encode!(source))
+    assert {:ok, document} = Document.open(path)
+    original = Graph.node(document.graph, "idea")
+    reset = Map.delete(original.data, "font")
+
+    assert {:ok, graph, _, inverse} =
+             Graph.apply(document.graph, Change.update(nodes: [%{id: "idea", data: reset}]))
+
+    assert {:ok, _saved} = Document.save(document, graph)
+    assert {:ok, reopened} = Document.open(path)
+    assert Graph.node(reopened.graph, "idea") == %{original | data: reset}
+    refute Map.has_key?(Graph.node(reopened.graph, "idea").data, "font")
+    assert reopened.source["appearance"] == source["appearance"]
+
+    assert {:ok, restored, _, _} = Graph.apply(graph, inverse)
+    assert restored == document.graph
+  end
+
+  test "invalid object font roles and concrete families are rejected without rewriting", %{
+    path: path
+  } do
+    original = path |> File.read!() |> Jason.decode!()
+
+    for kind <- ~w(rect text),
+        font <- [
+          nil,
+          "",
+          "inherit",
+          "body",
+          "serif",
+          "Sans",
+          "Mona Sans",
+          "Unbounded",
+          "Monaspace Neon",
+          "Amatic SC",
+          400,
+          false,
+          [],
+          %{}
+        ] do
+      source =
+        original
+        |> put_in(["nodes", Access.at(0), "data", "kind"], kind)
+        |> put_in(["nodes", Access.at(0), "data", "font"], font)
+
+      bytes = Jason.encode!(source)
+      File.write!(path, bytes)
+      assert {:error, _reason} = Document.open(path)
+      assert File.read!(path) == bytes
+    end
+  end
+
+  test "standalone lines accept no object font field, even a generic role" do
+    line = %{
+      "id" => "line",
+      "type" => "shape-line",
+      "x" => 10,
+      "y" => 20,
+      "width" => 200,
+      "height" => 100,
+      "data" => %{"from" => [12, 12], "to" => [188, 88], "stroke" => "accent"}
+    }
+
+    source = %{"version" => 1, "nodes" => [line], "edges" => []}
+    assert {:ok, _graph, _source} = Document.decode(Jason.encode!(source))
+
+    for font <- [nil, "inherit" | ~w(sans heading mono handwritten)] do
+      invalid = put_in(source, ["nodes", Access.at(0), "data", "font"], font)
+      assert {:error, _reason} = Document.decode(Jason.encode!(invalid))
     end
   end
 

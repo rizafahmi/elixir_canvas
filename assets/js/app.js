@@ -8,17 +8,23 @@ async function loadDrawingFonts(workspace) {
   // Preload every role so changing document appearance never measures a fallback.
   const probe = document.createElement("div")
   probe.className = workspace.className
+  const objectProbe = document.createElement("div")
+  objectProbe.className = "drawing-typography"
+  probe.append(objectProbe)
   probe.hidden = true
   workspace.append(probe)
   const fonts = new Set()
   try {
     for (const role of ["sans", "heading", "mono", "handwritten"]) {
       probe.dataset.drawingFont = role
-      const style = getComputedStyle(probe)
-      const family = style.getPropertyValue("--canvas-text-font").trim()
-      for (const suffix of ["", "-large"]) {
-        const weight = style.getPropertyValue(`--canvas-text-weight${suffix}`).trim()
-        fonts.add(`${weight} 28px ${family}`)
+      objectProbe.dataset.drawingFont = role
+      for (const element of [probe, objectProbe]) {
+        const style = getComputedStyle(element)
+        const family = style.getPropertyValue("--canvas-text-font").trim()
+        for (const suffix of ["", "-large"]) {
+          const weight = style.getPropertyValue(`--canvas-text-weight${suffix}`).trim()
+          fonts.add(`${weight} 28px ${family}`)
+        }
       }
     }
     await Promise.all([...fonts].map(font => document.fonts.load(font)))
@@ -30,6 +36,53 @@ async function loadDrawingFonts(workspace) {
 function setFontState(workspace, state) {
   workspace.drawingFontState = state
   workspace.dataset.fontState = state
+}
+
+function mountObjectTypography(canvas) {
+  const drawStylePanel = canvas.drawStylePanel.bind(canvas)
+  canvas.drawStylePanel = () => {
+    for (const id of canvas.selected) {
+      const node = canvas.nodes.get(id)
+      if (node?.type !== "shape") continue
+      const object = node.el.querySelector(".drawing-typography")
+      const shape = object?.querySelector("[data-hakushi-style]")
+      if (!shape) continue
+      const style = JSON.parse(shape.dataset.hakushiStyle)
+      const font = object.dataset.drawingFont ||
+        canvas.root.closest(".canvas-workspace").dataset.drawingFont
+      // The inspector shows the effective role without materializing inherited
+      // font metadata in the document.
+      if (style.font !== font) {
+        shape.dataset.hakushiStyle = JSON.stringify({...style, font})
+      }
+    }
+    return drawStylePanel()
+  }
+
+  const editText = canvas.editText.bind(canvas)
+  canvas.editText = node => {
+    const text = node.el.querySelector(".drawing-typography [data-hakushi-text]")
+    if (!text || canvas.config.readonly) return editText(node)
+    const style = getComputedStyle(text)
+    const typography = {
+      fontFamily: style.fontFamily,
+      fontSize: style.fontSize,
+      fontWeight: style.fontWeight,
+      fontStyle: style.fontStyle,
+      lineHeight: style.lineHeight,
+      letterSpacing: style.letterSpacing,
+      textAlign: style.textAlign,
+    }
+    editText(node)
+    // Hakushi moves the editor outside the object and only copies its family.
+    // Copy the remaining metrics synchronously, before typing or commit's
+    // scrollHeight measurement; retain its text/save/undo/growth handlers.
+    const editor = canvas.labelsEl.lastElementChild
+    if (editor?.classList.contains("hakushi-text-editor")) {
+      Object.assign(editor.style, typography)
+    }
+  }
+  canvas.drawStylePanel()
 }
 
 // Text commits can enqueue an automatic resize in their reply callback.
@@ -65,6 +118,12 @@ const FileCanvas = {
     setFontState(workspace, "ready")
     // Keep initialization outside the font catch: a canvas error is not a font error.
     Hakushi.mounted.call(this)
+    mountObjectTypography(this.canvas)
+    this.typographyObserver = new MutationObserver(() => this.canvas.drawStylePanel())
+    this.typographyObserver.observe(workspace, {
+      attributes: true,
+      attributeFilter: ["data-drawing-font"],
+    })
     const exportImage = this.canvas.exportImage.bind(this.canvas)
     this.canvas.exportImage = async options => {
       await loadDrawingFonts(workspace)
@@ -158,6 +217,7 @@ const FileCanvas = {
   destroyed() {
     window.removeEventListener("keydown", this.zoomKey, true)
     this.zoomObserver?.disconnect()
+    this.typographyObserver?.disconnect()
     Hakushi.destroyed.call(this)
   },
 }

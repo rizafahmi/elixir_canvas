@@ -156,6 +156,13 @@ family names. The renderer resolves `sans` through `--font-body`, `heading` thro
 large emphasis; heading text always uses `800`. Font loading must resolve these
 CSS roles before measurement or editing without changing saved geometry.
 
+Shapes can optionally override the document default with a generic `data.font`
+role. Missing object roles inherit; **Text style** shows the effective role and
+offers Normal, Title, Code, and Handwritten as explicit object styles.
+Changing a role never resizes authored boxes. Inline text editors and exports must
+use the same resolved per-object family, weight, and metrics as displayed text.
+Connector labels retain document typography; standalone lines have no font role.
+
 ### Hierarchy
 
 - **Two-Tone Hero Headline (`.headline-two-tone`)**: `Unbounded 800`, `clamp(1.65rem, 3.6vw, 2.5rem)`, line-height `1.15`.

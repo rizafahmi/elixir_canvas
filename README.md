@@ -12,7 +12,7 @@ and keyboard focus. Drawing colors and typography resolve through the interface'
 theme from portable names; the document retains its authored geometry and style intent.
 
 - **Paper** sits beside the filename at the upper left. The filename opens the
-  document menu: open, create, reload, drawing lettering, and shortcut help.
+  document menu: open, create, reload, **Default text style**, and shortcut help.
 - **Download** exports an image beside **Save** at the upper right; Save writes
   the source JSON. Download becomes icon-only on narrow screens.
 - Drawing tools and **Style** share the bottom dock, separated by a divider.
@@ -29,12 +29,14 @@ theme from portable names; the document retains its authored geometry and style 
 - Unsaved state remains visible under the filename. External changes and save
   failures appear as actionable messages rather than disappearing into a menu.
 
-New files use the generic `sans` typography role. **Drawing lettering** selects
-`sans`, `heading`, `mono`, or `handwritten` for the file; Save keeps that role,
-not a font-family name. The current Neo-Acid renderer resolves those roles to
-Mona Sans, Unbounded, Monaspace Neon, and Amatic SC respectively. A different
-interface can choose different families. Text may wrap differently under another
-theme, but opening or restyling a view must not resize or reposition saved objects.
+New files use the generic `sans` typography role. **Default text style** selects
+the document default: **Normal**, **Title**, **Code**, or **Handwritten**. In
+**Style**, the **Text style** group shows the selected shapes’ current style and
+lets them choose an explicit style. Save retains generic roles, not font-family names.
+The current Neo-Acid renderer resolves them to Mona Sans, Unbounded, Monaspace
+Neon, and Amatic SC respectively. A different interface can choose different
+families. Text may wrap differently, but opening or changing a typography role
+does not resize or reposition authored objects.
 
 The five self-hosted Neo-Acid faces serve the interface and the matching drawing
 roles: Unbounded 800, Mona Sans 400/700, and Monaspace Neon 400/700.
@@ -125,7 +127,7 @@ serialization, not the JSON Canvas standard.
 Optional top-level `appearance` is an object. Its `font`, when present, is a
 generic typography role, not a font-family name. A missing object or missing
 `font` means `sans`; saving an existing file does not insert appearance metadata
-unless you explicitly change the lettering role.
+unless you explicitly change the default text style.
 
 | Role | Intent | Current Neo-Acid rendering |
 | --- | --- | --- |
@@ -140,9 +142,12 @@ New files explicitly include:
 "appearance": {"font": "sans"}
 ```
 
-The role applies to all drawing text. Shape dimensions and `data.size` remain
-authored geometry and size. Other appearance metadata is preserved; unsupported
-role names and non-object appearance values are rejected.
+The document role is the default for shapes and connector labels. Text-bearing
+shapes may save an explicit `data.font` override. Missing `data.font` inherits the
+document role; choosing an object style saves an explicit role. Standalone lines
+do not have a typography role. Shape dimensions
+and `data.size` remain authored geometry and size. Other appearance metadata is
+preserved; unsupported role names and non-object appearance values are rejected.
 
 The interface owns resolved font families and palette values. It does not add a
 theme identifier, resolved font name, or hex colors when saving. Another renderer
@@ -180,6 +185,7 @@ Style fields in `data` follow the Shapes kit:
 | `dash` | Boolean | `false` |
 | `radius` | `0`, `8` (rectangle corner radius) | `8`; text: `0` |
 | `size` | `s`, `m`, `l` | `m` |
+| `font` | `sans`, `heading`, `mono`, `handwritten` (text-bearing shapes only) | Inherit document `appearance.font` |
 | `align` | `left`, `center`, `right` | `center`; text: `left` |
 | `rotation` | Numeric degrees | `0` |
 | `arrow` | `end`, `both`, `none` (standalone lines) | `end` |
