@@ -3,64 +3,6 @@
 A local-file-first spatial thinking canvas built with Elixir, Phoenix LiveView,
 and Hakushi. The JSON file is the document, not an export from a database.
 
-## Interface
-
-The editor uses the light Neo-Acid design system: Raw Plaster paper, square-edged
-floating controls, crisp black frames, and acid-filled active tools. Hovered tools
-stay neutral so the selected tool remains distinct. Cobalt marks object selection
-and keyboard focus. Drawing colors and typography resolve through the interface's
-theme from portable names; the document retains its authored geometry and style intent.
-
-- **Paper** sits beside the filename at the upper left. The filename opens the
-  document menu: native **Open…**, advanced server-path open/create, reload,
-  **Default text style**, and shortcut help.
-- **Download** exports an image beside **Save** at the upper right. Save writes
-  the selected JSON when possible; **Save copy** explicitly downloads a separate
-  JSON copy otherwise. Image Download becomes icon-only on narrow screens.
-  Their measured widths keep an 8px gap through Save/Save copy changes, font loading,
-  and window resizing; the filename yields space without hiding either action.
-- Drawing tools and **Style** share the bottom dock, separated by a divider.
-  **Line** (`L`) has a plain segment icon; **Arrow** (`A`) keeps its arrow icon.
-  The inspector opens above the dock, not over the drawing tools. Style becomes
-  icon-only on the smallest screens; all eight tool buttons remain visible at 320px.
-- Undo and redo stay at the top of the left rail. The live zoom percentage below
-  them opens a popover with zoom out/in, Fit to screen, and Reset to 100%.
-  Repeated adjustments keep it open; Escape or an outside click closes it.
-  Opening the popover does not change zoom, and the percentage also tracks wheel
-  zoom while closed.
-- Arrangement remains separate below a divider, with its options beside the
-  rail. The rail ends above the dock and scrolls vertically in short windows.
-- Selection alone does not open Style. Escape closes the menus and inspector.
-- Unsaved state remains visible under the filename. External changes and save
-  failures appear as actionable messages rather than disappearing into a menu.
-
-New files use the generic `sans` typography role. **Default text style** selects
-the document default: **Normal**, **Title**, **Code**, or **Handwritten**. In
-**Style**, the **Text style** group shows the selected shapes’ current style and
-lets them choose an explicit style. Save retains generic roles, not font-family names.
-The current Neo-Acid renderer resolves them to Mona Sans, Unbounded, Monaspace
-Neon, and Amatic SC respectively. A different interface can choose different
-families. Text may wrap differently, but opening or changing a typography role
-does not resize or reposition authored objects.
-
-The five self-hosted Neo-Acid faces serve the interface and the matching drawing
-roles: Unbounded 800, Mona Sans 400/700, and Monaspace Neon 400/700.
-Handwritten intent uses the separately bundled Amatic SC 700 face. Fonts are served
-from `priv/static/fonts`; canvas initialization waits for the resolved drawing
-font before measuring or editing text. No npm install is needed to run the app.
-
-See [DESIGN.md](DESIGN.md) for the shared design rules and the app-specific
-light-first adaptation. Shared primitives are in `assets/css/tokens.css`; workspace
-styling is in `assets/css/app.css`. The actual editor is the design surface, not a
-separate visual-study route.
-
-Amatic SC Bold is an unmodified upstream distribution from
-[Google Fonts](https://github.com/google/fonts), with its SIL Open Font License
-notice in `priv/static/fonts/amatic-sc/OFL.txt`. The five Neo-Acid faces are
-vendored from [Fontsource](https://fontsource.org/) packages `@fontsource/unbounded`,
-`@fontsource/mona-sans`, and `@fontsource/monaspace-neon`; their upstream SIL Open
-Font License notices are included in `priv/static/fonts/neo-acid`.
-
 ## Run
 
 Requires Elixir 1.18+ and a compatible Erlang/OTP, available through Nix. The
@@ -100,11 +42,6 @@ dirty because the app cannot confirm where you saved the download. **Reload:
 choose file again…** asks you to reselect the original file; it does not pretend
 an in-memory snapshot is fresh disk content.
 
-Browser automation exercises real file-input selection and downloaded JSON.
-Direct-write automation can exercise genuine origin-private file handles, but
-does not verify the operating-system picker or its visible permission prompts;
-those require a manual check in a supporting browser.
-
 **Advanced: server file path** retains the explicit server-local workflow. Its
 source-path field opens existing files on the machine running Phoenix. The
 new-file field creates an empty document at a path whose parent directory already
@@ -115,6 +52,56 @@ file locations.
 **Keep the server local.** It intentionally has access to local files, without
 accounts or access controls. Development and production configurations bind to
 IPv4 loopback. This is not a hosted multi-user application.
+
+## Interface
+
+The editor uses the light Neo-Acid design system: Raw Plaster paper, square-edged
+floating controls, crisp black frames, and acid-filled active tools. Hovered tools
+stay neutral so the selected tool remains distinct. Cobalt marks object selection
+and keyboard focus. Drawing colors and typography resolve through the interface's
+theme from portable names; the document retains its authored geometry and style intent.
+
+- **Paper** sits beside the filename at the upper left. The filename opens the
+  document menu: native **Open…**, advanced server-path open/create, reload,
+  **Default text style**, and shortcut help.
+- **Download** exports an image beside **Save** at the upper right. Save writes
+  the selected JSON when possible; **Save copy** explicitly downloads a separate
+  JSON copy otherwise. Image Download becomes icon-only on narrow screens.
+- Drawing tools and **Style** share the bottom dock, separated by a divider.
+  **Line** (`L`) has a plain segment icon; **Arrow** (`A`) keeps its arrow icon.
+  The inspector opens above the dock, not over the drawing tools. Style becomes
+  icon-only on the smallest screens; all eight tool buttons remain visible at 320px.
+- Undo and redo stay at the top of the left rail. The live zoom percentage below
+  them opens a popover with zoom out/in, Fit to screen, and Reset to 100%.
+  Repeated adjustments keep it open; Escape or an outside click closes it.
+  Opening the popover does not change zoom, and the percentage also tracks wheel
+  zoom while closed.
+- Arrangement remains separate below a divider, with its options beside the
+  rail. The rail ends above the dock and scrolls vertically in short windows.
+- Selection alone does not open Style. Escape closes the menus and inspector.
+- Unsaved state remains visible under the filename. External changes and save
+  failures appear as actionable messages rather than disappearing into a menu.
+
+New files use the generic `sans` typography role. **Default text style** selects
+the document default: **Normal**, **Title**, **Code**, or **Handwritten**. In
+**Style**, the **Text style** group shows the selected shapes’ current style and
+lets them choose an explicit style. Save retains generic roles, not font-family names.
+Font families and weights are listed under [Drawing appearance](#drawing-appearance)
+and in [DESIGN.md](DESIGN.md#3-typography). A different interface can choose different
+families. Text may wrap differently, but opening or changing a typography role
+does not resize or reposition authored objects. Fonts are self-hosted; canvas
+initialization waits for the resolved drawing font before measuring or editing text.
+
+See [DESIGN.md](DESIGN.md) for the shared design rules, app-specific light-first
+adaptation, and implementation details. The actual editor is the design surface,
+not a separate visual-study route.
+
+Amatic SC Bold is an unmodified upstream distribution from
+[Google Fonts](https://github.com/google/fonts), with its SIL Open Font License
+notice in `priv/static/fonts/amatic-sc/OFL.txt`. The five Neo-Acid faces are
+vendored from [Fontsource](https://fontsource.org/) packages `@fontsource/unbounded`,
+`@fontsource/mona-sans`, and `@fontsource/monaspace-neon`; their upstream SIL Open
+Font License notices are included in `priv/static/fonts/neo-acid`.
 
 ## Edit
 
@@ -308,15 +295,52 @@ consumer tests also cover validated content loading, server-path isolation,
 prepared-save metadata, snapshot acknowledgements with newer edits, copy-download
 dirty state, and stale reload/save rejection.
 
-Native-picker smoke checks use temporary documents, never the editable welcome
-source. Actual browser checks exercised input-file chooser selection/cancellation,
-invalid content, pending text flushing, dirty Open protection, and a downloaded
-copy reread from disk with source bytes unchanged. A separate temporary,
-genuine Origin Private File System handle exercised native read/write/close,
-external-revision refusal, reload, and an in-flight save acknowledgement that
-kept newer edits dirty; only picker acquisition and write timing were instrumented.
-That verifies the handle code path, **not an OS-selected file or permission dialog**.
-Puppeteer cannot intercept `showOpenFilePicker` dialogs; see its
+### Manual browser verification
+
+After [setup](#run), start a separate server from the repository root with a
+disposable copy, never the editable welcome source:
+
+```sh
+canvas_check_dir="$(mktemp -d)"
+cp test/fixtures/document.json "$canvas_check_dir/canvas.json"
+printf 'Temporary canvas: %s\n' "$canvas_check_dir/canvas.json"
+CANVAS_FILE="$canvas_check_dir/canvas.json" PORT=4001 mix phx.server
+```
+
+Open <http://localhost:4001> (or choose an unused port in both places). Exercise
+the affected journey and relevant failure cases; not every path is needed for
+every change:
+
+1. Edit text or draw using the normal controls. For interface changes, check
+   desktop and narrow layouts with the relevant menus or panels open.
+2. Save, inspect the actual temporary JSON for the edit, and check that unsaved
+   state clears. Reload or reopen the file and confirm the edit survives.
+3. Where relevant, cancel a picker, select invalid JSON, or change the temporary
+   source externally before saving. Confirm cancellation, invalid content, and
+   conflicts preserve canvas edits rather than replacing them or silently saving.
+4. For browser-selected direct saves, use **Open…** and the actual native picker
+   in a supporting secure-context browser, grant the requested permissions,
+   edit, and save. Inspect that selected file on disk and the dirty state; also
+   check relevant permission-denial behavior.
+5. In a browser without native file-write support, use **Open…** and the actual
+   file-input picker, edit, and **Save copy**. Inspect the downloaded JSON and
+   confirm the original is unchanged and edits remain dirty. Reselect the original
+   when checking reload.
+
+Stop only this check's server with Ctrl-C in its terminal (follow any shutdown
+prompt). Retain any captured evidence you need before removing only this check's
+scratch directory, from the same shell:
+
+```sh
+rm -r "$canvas_check_dir"
+```
+
+Browser automation can exercise real file-input selection and downloaded JSON;
+genuine origin-private file handles can exercise direct writes, but **OPFS does
+not verify an OS-selected file or its visible permission prompts**. Those require
+the manual native-picker check above. Masking an API does not establish Safari or
+Firefox compatibility. No automated browser runner is installed by the setup
+above. Puppeteer cannot intercept `showOpenFilePicker` dialogs; see its
 [documented interception limit](https://pptr.dev/api/puppeteer.page.waitforfilechooser).
 
 Hakushi 0.7.0 is the published Hex release used here. Its optional Issho integration
