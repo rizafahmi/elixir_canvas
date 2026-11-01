@@ -23,6 +23,362 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     %{view: view, path: path, source: source}
   end
 
+  test "selected bytes replace the canvas content and filename without writing the server source",
+       %{
+         view: view,
+         path: path,
+         source: source
+       } do
+    original = File.read!(path)
+
+    selected_source =
+      source
+      |> Map.put("appearance", %{"font" => "mono", "future" => %{"keep" => true}})
+      |> put_in(["nodes", Access.at(0), "x"], -125.5)
+      |> put_in(["nodes", Access.at(0), "data", "text"], "Chosen file content")
+      |> put_in(["nodes", Access.at(0), "data", "font"], "heading")
+
+    bytes = Jason.encode!(selected_source)
+    generation = workspace_integer(view, "data-generation")
+
+    assert %{ok: true, generation: accepted, revision: revision} =
+             selected_event(view, "selected-open", %{
+               "filename" => "chosen.canvas.json",
+               "bytes" => bytes,
+               "mode" => "browser_file",
+               "generation" => generation
+             })
+
+    assert accepted == generation + 1
+    assert revision == Base.encode16(:crypto.hash(:sha256, bytes), case: :lower)
+    assert has_element?(view, "#workspace[data-file-mode=browser_file][data-dirty=false]")
+
+    assert has_element?(
+             view,
+             "#workspace[data-file-name='chosen.canvas.json'][data-drawing-font=mono]"
+           )
+
+    assert render(view) =~ "chosen.canvas.json"
+    [idea, _make] = CanvasTest.nodes(view, board_id(view))
+    assert idea.x == -125.5
+    assert idea.label =~ "Chosen file content"
+
+    assert has_element?(
+             view,
+             "[data-id=idea] .drawing-typography[data-drawing-font=heading]"
+           )
+
+    assert File.read!(path) == original
+  end
+
+  test "invalid selected content and a dirty selected-open preserve the current canvas", %{
+    view: view,
+    path: path,
+    source: source
+  } do
+    original = File.read!(path)
+    board = board_id(view)
+    generation = workspace_integer(view, "data-generation")
+
+    valid = %{
+      "filename" => "other.json",
+      "bytes" => original,
+      "mode" => "save_copy",
+      "generation" => generation
+    }
+
+    for payload <- [
+          Map.put(valid, "bytes", "{"),
+          Map.delete(valid, "bytes"),
+          Map.put(valid, "bytes", %{}),
+          Map.put(valid, "filename", ""),
+          Map.put(valid, "filename", 42),
+          Map.put(valid, "mode", "server_file")
+        ] do
+      assert %{ok: false} = selected_event(view, "selected-open", payload)
+      assert board_id(view) == board
+      assert workspace_integer(view, "data-generation") == generation
+      assert has_element?(view, "#workspace[data-file-mode=server_file][data-dirty=false]")
+      assert hd(CanvasTest.nodes(view, board)).label =~ "Start with an idea"
+      assert File.read!(path) == original
+    end
+
+    assert :ok = CanvasTest.edit(view, board, "idea", "text", %{"value" => "Unsaved local text"})
+    assert has_element?(view, "#workspace[data-dirty=true]")
+
+    replacement =
+      put_in(source, ["nodes", Access.at(0), "data", "text"], "Must not replace edits")
+
+    assert %{ok: false} =
+             selected_event(view, "selected-open", %{
+               "filename" => "other.json",
+               "bytes" => Jason.encode!(replacement),
+               "mode" => "browser_file",
+               "generation" => generation
+             })
+
+    assert board_id(view) == board
+    assert workspace_integer(view, "data-generation") == generation
+    assert hd(CanvasTest.nodes(view, board)).label =~ "Unsaved local text"
+
+    assert File.read!(path) == original
+  end
+
+  test "a selected handle save acknowledges only its serialized snapshot while newer edits stay dirty",
+       %{view: view, path: path, source: source} do
+    original = File.read!(path)
+
+    selected_source =
+      source
+      |> Map.put("author", %{"keep" => "top-level metadata"})
+      |> Map.put("appearance", %{"font" => "sans", "future" => %{"keep" => true}})
+      |> Map.put("paper", %{"background" => "dots", "grid" => 20, "annotation" => "Keep paper"})
+      |> put_in(["nodes", Access.at(0), "annotation"], %{"keep" => true})
+      |> put_in(["nodes", Access.at(0), "data", "font"], "handwritten")
+      |> put_in(["edges", Access.at(0), "annotation"], %{"keep" => true})
+
+    opened_bytes = Jason.encode!(selected_source)
+
+    assert %{ok: true, generation: generation} =
+             selected_event(view, "selected-open", %{
+               "filename" => "selected.json",
+               "bytes" => opened_bytes,
+               "mode" => "browser_file",
+               "generation" => workspace_integer(view, "data-generation")
+             })
+
+    board = board_id(view)
+    assert :ok = CanvasTest.move(view, board, "idea", {125.5, -90})
+    render_change(view, "appearance", %{"font" => "heading"})
+
+    assert %{ok: true, token: token, bytes: bytes} =
+             prepared = selected_event(view, "save", %{"generation" => generation})
+
+    assert prepared.revision ==
+             Base.encode16(:crypto.hash(:sha256, opened_bytes), case: :lower)
+
+    assert prepared.saved_revision == Base.encode16(:crypto.hash(:sha256, bytes), case: :lower)
+    assert {:ok, snapshot} = Document.open_selected("selected.json", bytes, :browser_file)
+    assert Document.drawing_font(snapshot) == "heading"
+    assert snapshot.source["appearance"]["future"] == %{"keep" => true}
+    assert snapshot.source["author"] == selected_source["author"]
+    assert snapshot.source["paper"]["annotation"] == "Keep paper"
+    assert hd(snapshot.source["nodes"])["annotation"] == %{"keep" => true}
+    assert hd(snapshot.source["edges"])["annotation"] == %{"keep" => true}
+
+    assert {Graph.node(snapshot.graph, "idea").x, Graph.node(snapshot.graph, "idea").y} ==
+             {125.5, -90}
+
+    assert Graph.node(snapshot.graph, "idea").data["font"] == "handwritten"
+    assert has_element?(view, "#workspace[data-dirty=true]")
+
+    assert :ok = CanvasTest.move(view, board, "idea", {350, 70})
+    render_change(view, "appearance", %{"font" => "mono"})
+
+    assert %{ok: true} =
+             selected_event(view, "selected-saved", %{
+               "token" => token,
+               "generation" => generation
+             })
+
+    assert has_element?(view, "#workspace[data-dirty=true][data-drawing-font=mono]")
+    assert node_box(view, board, "idea") == {350, 70, 240, 140}
+    assert workspace_integer(view, "data-generation") == generation
+
+    assert %{ok: true, token: next_token, bytes: next_bytes} =
+             next_save = selected_event(view, "save", %{"generation" => generation})
+
+    assert next_save.revision == prepared.saved_revision
+
+    assert {:ok, next_snapshot} =
+             Document.open_selected("selected.json", next_bytes, :browser_file)
+
+    assert Graph.node(next_snapshot.graph, "idea").x == 350
+    assert Document.drawing_font(next_snapshot) == "mono"
+
+    assert %{ok: true} =
+             selected_event(view, "selected-saved", %{
+               "token" => next_token,
+               "generation" => generation
+             })
+
+    assert has_element?(view, "#workspace[data-dirty=false][data-drawing-font=mono]")
+    assert File.read!(path) == original
+  end
+
+  test "a downloaded selected copy stays dirty and can transition back to an explicit server file",
+       %{
+         view: view,
+         path: path,
+         source: source,
+         tmp_dir: directory
+       } do
+    original = File.read!(path)
+
+    assert %{ok: true, generation: generation} =
+             selected_event(view, "selected-open", %{
+               "filename" => "portable.json",
+               "bytes" => original,
+               "mode" => "save_copy",
+               "generation" => workspace_integer(view, "data-generation")
+             })
+
+    board = board_id(view)
+    assert :ok = CanvasTest.move(view, board, "idea", {260, -50})
+
+    assert %{ok: true, token: token, bytes: bytes} =
+             selected_event(view, "save", %{"generation" => generation})
+
+    copy_path = Path.join(directory, "downloaded-copy.json")
+    File.write!(copy_path, bytes, [:exclusive])
+    assert {:ok, copy} = Document.open(copy_path)
+    assert Graph.node(copy.graph, "idea").x == 260
+    assert Graph.node(copy.graph, "idea").data["text"] == hd(source["nodes"])["data"]["text"]
+
+    assert %{ok: false} =
+             selected_event(view, "selected-saved", %{
+               "token" => token,
+               "generation" => generation
+             })
+
+    assert %{ok: true} =
+             selected_event(view, "selected-copy-downloaded", %{
+               "token" => token,
+               "generation" => generation
+             })
+
+    assert has_element?(view, "#workspace[data-file-mode=save_copy][data-dirty=true]")
+    assert has_element?(view, "#file-notice[role=status]")
+    assert File.read!(path) == original
+
+    assert %{ok: true} =
+             selected_event(view, "selected-reload", %{
+               "filename" => "portable.json",
+               "bytes" => File.read!(path),
+               "mode" => "save_copy",
+               "generation" => generation,
+               "edit_version" => workspace_integer(view, "data-edit-version")
+             })
+
+    assert has_element?(view, "#workspace[data-file-mode=save_copy][data-dirty=false]")
+    assert node_box(view, board_id(view), "idea") == {0, 0, 240, 140}
+    render_submit(view, "open", %{"path" => copy_path})
+    assert has_element?(view, "#workspace[data-file-mode=server_file][data-dirty=false]")
+    assert :ok = CanvasTest.move(view, board_id(view), "idea", {500, 80})
+    assert %{ok: true} = selected_event(view, "save", %{})
+    assert {:ok, saved_copy} = Document.open(copy_path)
+    assert Graph.node(saved_copy.graph, "idea").x == 500
+    assert File.read!(path) == original
+  end
+
+  test "selected reload rejects a read overtaken by edits and accepts fresh selected content", %{
+    view: view,
+    path: path,
+    source: source
+  } do
+    original = File.read!(path)
+
+    assert %{ok: true, generation: generation} =
+             selected_event(view, "selected-open", %{
+               "filename" => "picked.json",
+               "bytes" => original,
+               "mode" => "browser_file",
+               "generation" => workspace_integer(view, "data-generation")
+             })
+
+    board = board_id(view)
+    assert :ok = CanvasTest.move(view, board, "idea", {175, -40})
+    read_version = workspace_integer(view, "data-edit-version")
+    render_change(view, "appearance", %{"font" => "heading"})
+    external = put_in(source, ["nodes", Access.at(0), "data", "text"], "Fresh handle contents")
+
+    reload = %{
+      "filename" => "picked.json",
+      "bytes" => Jason.encode!(external),
+      "mode" => "browser_file",
+      "generation" => generation,
+      "edit_version" => read_version
+    }
+
+    assert %{ok: false} = selected_event(view, "selected-reload", reload)
+    assert has_element?(view, "#workspace[data-dirty=true][data-drawing-font=heading]")
+    assert node_box(view, board, "idea") == {175, -40, 240, 140}
+
+    assert %{ok: true} =
+             selected_event(view, "selected-reload", %{
+               reload
+               | "edit_version" => workspace_integer(view, "data-edit-version")
+             })
+
+    assert has_element?(view, "#workspace[data-file-mode=browser_file][data-dirty=false]")
+    assert hd(CanvasTest.nodes(view, board_id(view))).label =~ "Fresh handle contents"
+
+    assert File.read!(path) == original
+  end
+
+  test "failed and mismatched selected saves preserve edits and cannot acknowledge another source",
+       %{
+         view: view,
+         path: path
+       } do
+    original = File.read!(path)
+
+    assert %{ok: true, generation: generation} =
+             selected_event(view, "selected-open", %{
+               "filename" => "selected.json",
+               "bytes" => original,
+               "mode" => "browser_file",
+               "generation" => workspace_integer(view, "data-generation")
+             })
+
+    assert :ok = CanvasTest.move(view, board_id(view), "idea", {220, -25})
+
+    assert %{ok: true, token: token} =
+             selected_event(view, "save", %{"generation" => generation})
+
+    assert %{ok: false} =
+             selected_event(view, "selected-saved", %{
+               "token" => "not-the-prepared-token",
+               "generation" => generation
+             })
+
+    render_submit(view, "open", %{"path" => path})
+    assert has_element?(view, "#workspace[data-file-mode=browser_file][data-dirty=true]")
+
+    assert %{ok: false} =
+             selected_event(view, "selected-save-error", %{
+               "token" => token,
+               "generation" => generation,
+               "message" => "File changed on disk. Nothing was overwritten.",
+               "status" => "changed"
+             })
+
+    assert has_element?(view, "#workspace[data-dirty=true]")
+    assert node_box(view, board_id(view), "idea") == {220, -25, 240, 140}
+    assert has_element?(view, "#disk-warning[role=status]")
+    assert File.read!(path) == original
+
+    assert %{ok: true} =
+             selected_event(view, "selected-reload", %{
+               "filename" => "selected.json",
+               "bytes" => original,
+               "mode" => "browser_file",
+               "generation" => generation,
+               "edit_version" => workspace_integer(view, "data-edit-version")
+             })
+
+    render_submit(view, "open", %{"path" => path})
+
+    assert %{ok: false} =
+             selected_event(view, "selected-saved", %{
+               "token" => token,
+               "generation" => generation
+             })
+
+    assert has_element?(view, "#workspace[data-file-mode=server_file][data-dirty=false]")
+    assert File.read!(path) == original
+  end
+
   test "opening an implicit sans document stays clean and saving does not add appearance", %{
     view: view,
     path: path
@@ -31,7 +387,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert has_element?(view, "[data-dirty=false][data-drawing-font=sans]")
     assert File.read!(path) == bytes
 
-    render_click(view, "save")
+    assert %{ok: true} = selected_event(view, "save", %{})
     {:ok, document} = Document.open(path)
     refute Map.has_key?(document.source, "appearance")
     assert has_element?(view, "[data-dirty=false][data-drawing-font=sans]")
@@ -56,7 +412,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
       {:ok, before_save} = Document.open(path)
       refute Document.drawing_font(before_save) == font
 
-      render_click(view, "save")
+      assert %{ok: true} = selected_event(view, "save", %{})
       assert has_element?(view, "[data-dirty=false][data-drawing-font=#{font}]")
       {:ok, saved} = Document.open(path)
       assert saved.source["appearance"] == %{"font" => font, "future" => %{"keep" => true}}
@@ -105,7 +461,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
 
     for font <- ~w(mono heading handwritten sans) do
       render_change(view, "appearance", %{"font" => font})
-      render_click(view, "save")
+      assert %{ok: true} = selected_event(view, "save", %{})
       render_click(view, "reload")
       assert {:ok, reopened} = Document.open(path)
       assert Document.drawing_font(reopened) == font
@@ -153,7 +509,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert :ok = CanvasTest.undo(view, board)
     assert has_element?(view, "[data-dirty=false]")
     assert :ok = CanvasTest.redo(view, board)
-    render_click(view, "save")
+    assert %{ok: true} = selected_event(view, "save", %{})
     assert {:ok, overridden} = Document.open(path)
 
     for id <- ~w(idea make) do
@@ -204,7 +560,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert :ok = CanvasTest.redo(view, board)
     assert node_box(view, board, "make") == List.to_tuple(grown_box)
 
-    render_click(view, "save")
+    assert %{ok: true} = selected_event(view, "save", %{})
     render_click(view, "reload")
     assert {:ok, reopened} = Document.open(path)
     edited = Graph.node(reopened.graph, "make")
@@ -254,7 +610,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert node_box(view, board, "line") == {before.x, before.y, before.width, before.height}
     assert has_element?(view, "[data-dirty=false]")
     assert :ok = CanvasTest.redo(view, board)
-    render_click(view, "save")
+    assert %{ok: true} = selected_event(view, "save", %{})
     assert {:ok, saved} = Document.open(path)
     after_edit = Graph.node(saved.graph, "line")
     assert after_edit.data == Map.merge(before.data, Map.take(params, ["from", "to"]))
@@ -291,6 +647,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
 
     assert :ok = CanvasTest.connect(view, board, {"idea", "right"}, {"idea", "top"})
     [loop] = CanvasTest.edges(view, board) -- initial_edges
+
     assert {loop.source, loop.source_handle, loop.target, loop.target_handle} ==
              {"idea", "right", "idea", "top"}
 
@@ -304,9 +661,10 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
     assert :ok = CanvasTest.redo(view, board)
     assert loop in CanvasTest.edges(view, board)
 
-    render_click(view, "save")
+    assert %{ok: true} = selected_event(view, "save", %{})
     assert {:ok, saved} = Document.open(path)
     saved_loop = Graph.edge(saved.graph, loop.id)
+
     assert {saved_loop.source, saved_loop.source_handle, saved_loop.target,
             saved_loop.target_handle} == {"idea", "right", "idea", "top"}
 
@@ -331,5 +689,27 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
   defp node_box(view, board, id) do
     node = view |> CanvasTest.nodes(board) |> Enum.find(&(&1.id == id))
     {node.x, node.y, node.width, node.height}
+  end
+
+  defp workspace_integer(view, attribute) do
+    view
+    |> render()
+    |> LazyHTML.from_fragment()
+    |> LazyHTML.query("#workspace")
+    |> LazyHTML.attribute(attribute)
+    |> List.first()
+    |> String.to_integer()
+  end
+
+  defp selected_event(view, event, payload) do
+    render(view)
+    view |> element("#workspace") |> render_hook(event, payload)
+    %{proxy: {ref, _topic, _pid}} = view
+
+    receive do
+      {^ref, {:reply, reply}} -> reply
+    after
+      1_000 -> flunk("selected file event #{event} did not reply")
+    end
   end
 end

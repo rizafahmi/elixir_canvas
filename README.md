@@ -12,9 +12,13 @@ and keyboard focus. Drawing colors and typography resolve through the interface'
 theme from portable names; the document retains its authored geometry and style intent.
 
 - **Paper** sits beside the filename at the upper left. The filename opens the
-  document menu: open, create, reload, **Default text style**, and shortcut help.
-- **Download** exports an image beside **Save** at the upper right; Save writes
-  the source JSON. Download becomes icon-only on narrow screens.
+  document menu: native **Open…**, advanced server-path open/create, reload,
+  **Default text style**, and shortcut help.
+- **Download** exports an image beside **Save** at the upper right. Save writes
+  the selected JSON when possible; **Save copy** explicitly downloads a separate
+  JSON copy otherwise. Image Download becomes icon-only on narrow screens.
+  Their measured widths keep an 8px gap through Save/Save copy changes, font loading,
+  and window resizing; the filename yields space without hiding either action.
 - Drawing tools and **Style** share the bottom dock, separated by a divider.
   **Line** (`L`) has a plain segment icon; **Arrow** (`A`) keeps its arrow icon.
   The inspector opens above the dock, not over the drawing tools. Style becomes
@@ -75,10 +79,31 @@ Saving it edits that actual example file. To start with a different file:
 CANVAS_FILE=/absolute/path/to/ideas.json mix phx.server
 ```
 
-The document menu's source-path field opens existing files on the machine running
-Phoenix. The new-file field creates an empty document at a path whose parent
-directory already exists. Creation refuses to replace an existing file. Paths
-can be absolute or relative to the server's working directory.
+Use **Open…** in the document menu to choose a JSON canvas with the operating
+system's file picker. The selected bytes are validated by the same document
+decoder as server files. The browser provides a filename, not an absolute server
+path; opening a selected file never redirects Save to the initial document or
+guesses a path from its name. Cancelled pickers and invalid content leave the
+current document intact. Opening another file is blocked while canvas edits or
+pending text commits remain unsaved.
+
+On supporting browsers in a secure context (including localhost), the browser's
+File System Access handle lets **Save** write the selected file after permission
+is granted, and **Reload from disk** reads that handle again. Handles belong to
+the current tab; a page/session restart requires opening the file again. Safari,
+Firefox, and other browsers without this picker API use a genuine file-input
+picker instead. This opens a copy: **Save copy** downloads JSON, shows
+“Copy downloaded; original file not changed”, and keeps unsaved edits marked
+dirty because the app cannot confirm where you saved the download. **Reload:
+choose file again…** asks you to reselect the original file; it does not pretend
+an in-memory snapshot is fresh disk content.
+
+**Advanced: server file path** retains the explicit server-local workflow. Its
+source-path field opens existing files on the machine running Phoenix. The
+new-file field creates an empty document at a path whose parent directory already
+exists and refuses to replace an existing file. Paths can be absolute or relative
+to the server's working directory. These are server paths, not browser-selected
+file locations.
 
 **Keep the server local.** It intentionally has access to local files, without
 accounts or access controls. Development and production configurations bind to
@@ -111,25 +136,35 @@ IPv4 loopback. This is not a hosted multi-user application.
   closed or open, including while a text field has focus. Unmodified `+` and `-`
   still type normally.
 - Undo and redo are provided by Hakushi. Reloading the source resets that history.
-- Save explicitly with **Save**, Command-S, or Control-S. Saving commits an active
-  shape text editor and waits for Hakushi's resulting changes, including automatic
-  text-box growth. Unsaved changes live in memory until saved, not in a database.
-- Edit the JSON in an ordinary text editor, then use **Reload from disk** in the
-  document menu to read it back. Reload asks before discarding unsaved canvas edits.
+- Save explicitly with **Save** or **Save copy**, Command-S, or Control-S. Saving
+  commits an active shape text editor and waits for Hakushi's resulting changes,
+  including automatic text-box growth. Unsaved changes live in memory, not in a
+  database. A browser write acknowledgement only clears edits included in its
+  serialized snapshot; edits made while writing remain dirty.
+- Edit the JSON in an ordinary text editor, then reload it through the document
+  menu. Reload asks before discarding unsaved canvas edits. Browser-selected
+  copies must be selected again; handle-backed files and server-path files are
+  reread from their respective source.
 
-The app checks the source file once a second. A detected external modification,
-removal, or read failure leaves the current canvas intact. Saving also checks the
-last-read SHA-256 revision, so it refuses stale writes even before the next check.
-An invalid file produces an error rather than replacing the open graph.
+Server-path files are checked once a second. A detected external modification,
+removal, or read failure leaves the current canvas intact. Their saves check the
+last-read SHA-256 revision even before the next check. Browser-selected handles
+are checked when saving or reloading, not polled by the server. Saving hashes the
+current selected file before opening its writer and again before closing it;
+changed or unavailable sources refuse the write without discarding canvas edits.
+Input-opened copies have no live disk handle, so external changes can only be read
+by selecting the file again. Invalid content never replaces the open graph.
 
-Saves write and sync a temporary sibling file, preserve permission bits, check
-that the source revision still matches, and rename the temporary file over the
-source. App saves to the same path are serialized across tabs. These are
+Server-path saves write and sync a temporary sibling file, preserve permission
+bits, recheck the revision, and rename over the source. App saves to that path are
+serialized across tabs. Browser-handle saves use an exclusive writable stream;
+the file is replaced only after the stream closes successfully. Both are
 optimistic checks, **not a filesystem compare-and-swap or a lock respected by
-other editors**: an external write racing the final check and rename is not
-excluded. Take turns editing externally; automatic merging is deliberately absent.
-Symbolic links are refused rather than replaced. Save does not preserve extended
-attributes or provide power-loss durability guarantees for the parent directory.
+external editors**: an external write racing the final check and replacement is
+not excluded. Take turns editing externally; automatic merging is absent.
+Server paths refuse symbolic links. Server saves do not preserve extended
+attributes or guarantee parent-directory power-loss durability; browser file
+permissions and filesystem write behavior are controlled by the browser.
 
 ## Document format: version 1
 
@@ -261,7 +296,21 @@ mix assets.build
 
 The permanent tests cover file round-trips, external changes, competing app saves,
 metadata retention, document lettering, deletion, relocation, malformed documents,
-stable IDs, permissions, and refusing to overwrite existing files.
+stable IDs, permissions, and refusing to overwrite existing files. Selected-file
+consumer tests also cover validated content loading, server-path isolation,
+prepared-save metadata, snapshot acknowledgements with newer edits, copy-download
+dirty state, and stale reload/save rejection.
+
+Native-picker smoke checks use temporary documents, never the editable welcome
+source. Actual browser checks exercised input-file chooser selection/cancellation,
+invalid content, pending text flushing, dirty Open protection, and a downloaded
+copy reread from disk with source bytes unchanged. A separate temporary,
+genuine Origin Private File System handle exercised native read/write/close,
+external-revision refusal, reload, and an in-flight save acknowledgement that
+kept newer edits dirty; only picker acquisition and write timing were instrumented.
+That verifies the handle code path, **not an OS-selected file or permission dialog**.
+Puppeteer cannot intercept `showOpenFilePicker` dialogs; see its
+[documented interception limit](https://pptr.dev/api/puppeteer.page.waitforfilechooser).
 
 Hakushi 0.7.0 is the published Hex release used here. Its optional Issho integration
 currently emits an upstream undefined-module warning when compiled without Issho;

@@ -81,7 +81,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { opacity: .4; cursor: default; }
-:is(button, input, select, a):focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+:is(button, input, select, a, summary):focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 .canvas-workspace {
   --workspace-inset: 24px;
   --workspace-bottom: max(24px, env(safe-area-inset-bottom));
@@ -104,7 +104,7 @@ button:disabled { opacity: .4; cursor: default; }
 
 /* Framed floating tools, not a page header: keep the paper uninterrupted. */
 .canvas-header { position: absolute; inset: var(--workspace-inset) var(--workspace-inset) auto; z-index: 10; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; pointer-events: none; }
-.document-identity { min-width: 0; max-width: min(48vw, 440px); pointer-events: none; }
+.document-identity { flex: 0 1 440px; min-width: 0; max-width: min(48vw, calc(100% - var(--save-action-width, var(--save-width)) - var(--export-action-width, var(--export-width)) - 24px)); pointer-events: none; }
 .canvas-workspace:has(.drawing-board) .document-identity { padding-left: 52px; }
 .document-toggle { display: flex; align-items: center; gap: 12px; max-width: 100%; min-height: 44px; padding: 10px 14px; border: var(--border-frame); border-radius: 0; background: var(--bg-elevated); color: var(--text-primary); }
 .document-toggle { pointer-events: auto; }
@@ -117,9 +117,9 @@ button:disabled { opacity: .4; cursor: default; }
 .status-dot { flex: none; width: 7px; height: 7px; border: 1px solid var(--hl-ink); border-radius: 0; background: var(--hl-mint); }
 .unsaved .status-dot { background: var(--hl-violet); }
 .conflict .status-dot { background: var(--hl-magenta); }
-.canvas-actions { display: flex; margin-left: calc(var(--export-width) + 8px); flex: none; pointer-events: auto; }
+.canvas-actions { display: flex; margin-left: calc(var(--export-action-width, var(--export-width)) + 8px); flex: none; pointer-events: auto; }
 .save-button, .style-button, .menu-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 14px; border: var(--border-frame); border-radius: 0; background: var(--bg-elevated); color: var(--text-primary); font: 700 11px/1.5 var(--font-mono); white-space: nowrap; }
-.save-button { width: var(--save-width); background: var(--text-primary); color: var(--bg-elevated); }
+.save-button { flex: none; min-width: var(--save-width); background: var(--text-primary); color: var(--bg-elevated); }
 .save-button:hover:not(:disabled), .menu-button:hover { background: var(--hl-acid); color: var(--hl-ink); }
 .style-button:hover:not(:disabled) { background: var(--bg-surface); }
 .style-button[aria-pressed="true"] { color: var(--text-primary); background: var(--bg-surface); border-bottom-width: 4px; }
@@ -144,6 +144,10 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
 .file-input-row .menu-button { flex: none; min-height: 40px; padding: 8px 10px; }
 .reload-button { margin-top: 16px; }
 .file-form .menu-button { justify-self: start; }
+.native-open-button { width: 100%; background: var(--text-primary); color: var(--bg-elevated); }
+.native-open-button svg { width: 16px; height: 16px; }
+.server-file-options > summary { cursor: pointer; font: 700 11px/1.6 var(--font-mono); }
+.server-file-options .file-form:first-of-type { margin-top: 18px; }
 .shortcut-list { display: grid; gap: 0; margin: 20px 0 0; border-top: var(--border-row); color: var(--text-secondary); font-size: 11px; }
 .shortcut-list > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: var(--border-row); }
 .shortcut-list :is(dt, dd) { margin: 0; }
@@ -260,7 +264,7 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
 .canvas-workspace .hakushi-tools .hakushi-tool-options { grid-column: 1 / -1; }
 .canvas-workspace .hakushi-controls > :is([data-action="paper"], [data-action="export"]) { position: fixed; top: var(--workspace-inset); display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; border: var(--border-frame); background: var(--bg-elevated); color: var(--text-primary); font: 700 11px/1.5 var(--font-mono); z-index: 11; }
 .canvas-workspace .hakushi-controls > [data-action="paper"] { left: var(--workspace-inset); }
-.canvas-workspace .hakushi-controls > [data-action="export"] { right: calc(var(--workspace-inset) + var(--save-width) + 8px); width: var(--export-width); }
+.canvas-workspace .hakushi-controls > [data-action="export"] { right: calc(var(--workspace-inset) + var(--save-action-width, var(--save-width)) + 8px); width: var(--export-width); }
 .canvas-workspace .hakushi-controls > [data-action="export"]::after { content: "Download"; }
 .canvas-workspace .hakushi-controls > [data-action="export"]:hover { background: var(--hl-acid); color: var(--hl-ink); }
 .canvas-workspace .hakushi-control:hover { background: var(--bg-surface); }
@@ -306,7 +310,6 @@ kbd { padding: 2px 4px; border: var(--border-row); border-radius: 0; font: 10px 
 @media (max-width: 600px) {
   .canvas-workspace { --workspace-inset: 12px; --workspace-bottom: max(16px, env(safe-area-inset-bottom)); --save-width: 76px; --export-width: 44px; --style-width: 80px; }
   .canvas-header { gap: 8px; }
-  .document-identity { max-width: calc(100% - var(--save-width) - var(--export-width) - 24px); }
   .document-toggle { padding: 10px 8px; gap: 6px; }
   .document-toggle svg:last-child { margin-left: 0; }
   .document-name { font-size: 10px; }

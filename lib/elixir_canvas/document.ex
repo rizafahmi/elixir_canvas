@@ -1,7 +1,9 @@
 defmodule ElixirCanvas.Document do
   @moduledoc """
-  A version-1 JSON canvas and its last-read disk revision.
+  A version-1 JSON canvas opened from a server path or a browser-selected file.
 
+  Server paths retain their last-read disk revision; selected files remain in memory
+  with a filename and client persistence capability, never an inferred server path.
   Hakushi owns graph operations; this module owns the portable file contract.
   Unknown fields are retained when supported objects are edited and saved.
   Appearance metadata is optional; omitted fonts retain the generic sans role.
@@ -11,7 +13,7 @@ defmodule ElixirCanvas.Document do
 
   alias Hakushi.Graph
 
-  defstruct [:path, :revision, :graph, source: %{}]
+  defstruct [:path, :filename, :revision, :graph, persistence: :server_file, source: %{}]
 
   @font_roles ~w(sans heading mono handwritten)
   @node_fields ~w(id type x y width height data locked parent)
@@ -22,7 +24,29 @@ defmodule ElixirCanvas.Document do
 
     with {:ok, bytes} <- read_regular(path),
          {:ok, graph, source} <- decode(bytes) do
-      {:ok, %__MODULE__{path: path, revision: digest(bytes), graph: graph, source: source}}
+      {:ok,
+       %__MODULE__{
+         path: path,
+         filename: Path.basename(path),
+         revision: digest(bytes),
+         graph: graph,
+         source: source
+       }}
+    end
+  end
+
+  def open_selected(filename, bytes, persistence)
+      when is_binary(filename) and filename != "" and is_binary(bytes) and
+             persistence in [:browser_file, :save_copy] do
+    with {:ok, graph, source} <- decode(bytes) do
+      {:ok,
+       %__MODULE__{
+         filename: filename,
+         persistence: persistence,
+         revision: digest(bytes),
+         graph: graph,
+         source: source
+       }}
     end
   end
 
@@ -59,22 +83,38 @@ defmodule ElixirCanvas.Document do
   def drawing_font(%__MODULE__{source: %{"appearance" => %{"font" => font}}}), do: font
   def drawing_font(%__MODULE__{}), do: "sans"
 
-  def status(%__MODULE__{path: path, revision: revision}) do
+  def prepare_save(%__MODULE__{} = document, %Graph{} = graph) do
+    bytes = encode(document, graph)
+
+    with {:ok, _graph, source} <- decode(bytes) do
+      {:ok, bytes, %{document | graph: graph, revision: digest(bytes), source: source}}
+    end
+  end
+
+  def status(%__MODULE__{persistence: persistence})
+      when persistence in [:browser_file, :save_copy],
+      do: :client_managed
+
+  def status(%__MODULE__{persistence: :server_file, path: path, revision: revision}) do
     case read_regular(path) do
       {:ok, bytes} -> if digest(bytes) == revision, do: :unchanged, else: :changed
       {:error, _reason} -> :unavailable
     end
   end
 
-  def save(%__MODULE__{} = document, %Graph{} = graph) do
+  def save(%__MODULE__{persistence: :browser_file}, %Graph{}),
+    do: {:error, "Save this file through the browser's selected file handle."}
+
+  def save(%__MODULE__{persistence: :save_copy}, %Graph{}),
+    do: {:error, "Use Save copy; the browser cannot overwrite the selected original file."}
+
+  def save(%__MODULE__{persistence: :server_file} = document, %Graph{} = graph) do
     # Serialize saves from this app's tabs. External editors do not take this lock.
     :global.trans({{__MODULE__, document.path}, self()}, fn ->
-      bytes = encode(document, graph)
-
-      with {:ok, _graph, source} <- decode(bytes),
+      with {:ok, bytes, prepared} <- prepare_save(document, graph),
            :ok <- current_revision(document),
            :ok <- replace(document, bytes) do
-        {:ok, %{document | graph: graph, revision: digest(bytes), source: source}}
+        {:ok, prepared}
       end
     end)
   end
@@ -85,6 +125,7 @@ defmodule ElixirCanvas.Document do
 
     document = %__MODULE__{
       path: path,
+      filename: Path.basename(path),
       graph: graph,
       source: %{"appearance" => %{"font" => "sans"}}
     }

@@ -22,6 +22,8 @@ defmodule ElixirCanvasWeb.CanvasLive do
         error: nil,
         notice: nil,
         generation: 0,
+        edit_version: 0,
+        pending_save: nil,
         file_menu_open: false,
         style_open: false
       )
@@ -31,52 +33,197 @@ defmodule ElixirCanvasWeb.CanvasLive do
 
   @impl true
   def handle_event("open", %{"path" => path}, socket) do
-    if socket.assigns.dirty do
-      {:noreply, assign(socket, error: "Save or reload this canvas before opening another file.")}
-    else
-      {:noreply, load_document(socket, path)}
+    cond do
+      socket.assigns.pending_save ->
+        {:noreply, assign(socket, error: "Wait for the current file save to finish.")}
+
+      socket.assigns.dirty ->
+        {:noreply,
+         assign(socket, error: "Save or reload this canvas before opening another file.")}
+
+      true ->
+        {:noreply, load_document(socket, path)}
     end
   end
 
   def handle_event("create", %{"path" => path}, socket) do
-    if socket.assigns.dirty do
-      {:noreply,
-       assign(socket, error: "Save or reload this canvas before creating another file.")}
-    else
-      case Document.create(path) do
-        {:ok, document} -> {:noreply, put_document(socket, document)}
-        {:error, reason} -> {:noreply, assign(socket, error: reason)}
-      end
+    cond do
+      socket.assigns.pending_save ->
+        {:noreply, assign(socket, error: "Wait for the current file save to finish.")}
+
+      socket.assigns.dirty ->
+        {:noreply,
+         assign(socket, error: "Save or reload this canvas before creating another file.")}
+
+      true ->
+        case Document.create(path) do
+          {:ok, document} -> {:noreply, put_document(socket, document)}
+          {:error, reason} -> {:noreply, assign(socket, error: reason)}
+        end
+    end
+  end
+
+  def handle_event("selected-open", params, socket) do
+    cond do
+      params["generation"] != socket.assigns.generation ->
+        {:reply, %{ok: false}, socket}
+
+      socket.assigns.pending_save ->
+        {:reply, %{ok: false}, assign(socket, error: "Wait for the current file save to finish.")}
+
+      socket.assigns.dirty ->
+        {:reply, %{ok: false},
+         assign(socket, error: "Save or reload this canvas before opening another file.")}
+
+      true ->
+        load_selected(socket, params)
+    end
+  end
+
+  def handle_event("selected-reload", params, socket) do
+    document = socket.assigns.document
+
+    cond do
+      !document || document.persistence == :server_file ||
+        params["generation"] != socket.assigns.generation ||
+          params["filename"] != document.filename ->
+        {:reply, %{ok: false}, socket}
+
+      socket.assigns.pending_save ->
+        {:reply, %{ok: false}, assign(socket, error: "Wait for the current file save to finish.")}
+
+      params["edit_version"] != socket.assigns.edit_version ->
+        {:reply, %{ok: false},
+         assign(socket,
+           error:
+             "Canvas changed while the file was being read. Reload again to discard those edits."
+         )}
+
+      true ->
+        load_selected(socket, params)
     end
   end
 
   def handle_event("save", _params, %{assigns: %{document: nil}} = socket),
-    do: {:noreply, socket}
+    do: {:reply, %{ok: false}, socket}
 
-  def handle_event("save", _params, socket) do
-    document = with_drawing_font(socket.assigns.document, socket.assigns.drawing_font)
+  def handle_event("save", params, socket) do
+    cond do
+      socket.assigns.pending_save ->
+        {:reply, %{ok: false}, assign(socket, error: "Wait for the current file save to finish.")}
 
-    case Document.save(document, socket.assigns.graph) do
-      {:ok, document} ->
-        {:noreply,
+      Map.get(params, "generation", socket.assigns.generation) != socket.assigns.generation ->
+        {:reply, %{ok: false}, socket}
+
+      socket.assigns.document.persistence == :server_file ->
+        save_server_document(socket)
+
+      params["generation"] == socket.assigns.generation ->
+        prepare_selected_save(socket)
+
+      true ->
+        {:reply, %{ok: false},
+         assign(socket, error: "Use the Save button to save the selected file on this device.")}
+    end
+  end
+
+  def handle_event("selected-saved", %{"token" => token, "generation" => generation}, socket) do
+    case socket.assigns.pending_save do
+      %{
+        token: ^token,
+        generation: ^generation,
+        document: %{persistence: :browser_file} = document
+      } ->
+        dirty =
+          socket.assigns.graph != document.graph or
+            socket.assigns.drawing_font != Document.drawing_font(document)
+
+        {:reply, %{ok: true},
          assign(socket,
            document: document,
-           dirty: false,
+           pending_save: nil,
+           dirty: dirty,
            disk_status: :unchanged,
            error: nil,
-           notice: "Saved to disk"
+           notice: if(dirty, do: nil, else: "Saved to disk")
          )}
 
-      {:error, reason} ->
-        {:noreply, assign(socket, error: reason, notice: nil)}
+      _ ->
+        {:reply, %{ok: false}, socket}
+    end
+  end
+
+  def handle_event(
+        "selected-copy-downloaded",
+        %{"token" => token, "generation" => generation},
+        socket
+      ) do
+    case socket.assigns.pending_save do
+      %{token: ^token, generation: ^generation, document: %{persistence: :save_copy}} ->
+        {:reply, %{ok: true},
+         assign(socket,
+           pending_save: nil,
+           error: nil,
+           notice: "Copy downloaded; original file not changed"
+         )}
+
+      _ ->
+        {:reply, %{ok: false}, socket}
+    end
+  end
+
+  def handle_event(
+        "selected-save-error",
+        %{"token" => token, "generation" => generation} = params,
+        socket
+      ) do
+    case socket.assigns.pending_save do
+      %{token: ^token, generation: ^generation} ->
+        status =
+          case params["status"] do
+            "changed" -> :changed
+            "unavailable" -> :unavailable
+            _ -> socket.assigns.disk_status
+          end
+
+        {:reply, %{ok: false},
+         assign(socket,
+           pending_save: nil,
+           error: params["message"],
+           notice: nil,
+           disk_status: status
+         )}
+
+      _ ->
+        {:reply, %{ok: false}, socket}
+    end
+  end
+
+  def handle_event("selected-error", %{"generation" => generation, "message" => message}, socket)
+      when is_binary(message) do
+    if generation == socket.assigns.generation do
+      {:noreply, assign(socket, error: message, notice: nil)}
+    else
+      {:noreply, socket}
     end
   end
 
   def handle_event("reload", _params, %{assigns: %{document: nil}} = socket),
     do: {:noreply, socket}
 
-  def handle_event("reload", _params, socket),
-    do: {:noreply, load_document(socket, socket.assigns.document.path)}
+  def handle_event("reload", _params, socket) do
+    cond do
+      socket.assigns.pending_save ->
+        {:noreply, assign(socket, error: "Wait for the current file save to finish.")}
+
+      socket.assigns.document.persistence == :server_file ->
+        {:noreply, load_document(socket, socket.assigns.document.path)}
+
+      true ->
+        {:noreply,
+         assign(socket, error: "Use Reload to read the selected file again on this device.")}
+    end
+  end
 
   def handle_event("appearance", %{"font" => font}, socket)
       when font in ["sans", "heading", "mono", "handwritten"] do
@@ -85,7 +232,14 @@ defmodule ElixirCanvasWeb.CanvasLive do
         font != Document.drawing_font(socket.assigns.document) or
           socket.assigns.graph != socket.assigns.document.graph
 
-      {:noreply, assign(socket, drawing_font: font, dirty: dirty, notice: nil)}
+      {:noreply,
+       assign(socket,
+         drawing_font: font,
+         dirty: dirty,
+         notice: nil,
+         edit_version:
+           socket.assigns.edit_version + if(font != socket.assigns.drawing_font, do: 1, else: 0)
+       )}
     else
       {:noreply, socket}
     end
@@ -114,14 +268,24 @@ defmodule ElixirCanvasWeb.CanvasLive do
       graph != socket.assigns.document.graph or
         socket.assigns.drawing_font != Document.drawing_font(socket.assigns.document)
 
-    {:noreply, assign(socket, graph: graph, dirty: dirty, notice: nil)}
+    {:noreply,
+     assign(socket,
+       graph: graph,
+       dirty: dirty,
+       notice: nil,
+       edit_version:
+         socket.assigns.edit_version + if(graph != socket.assigns.graph, do: 1, else: 0)
+     )}
   end
 
   def handle_info(:check_file, socket) do
     Process.send_after(self(), :check_file, 1_000)
 
     status =
-      if socket.assigns.document, do: Document.status(socket.assigns.document), else: :unchanged
+      case socket.assigns.document do
+        %{persistence: :server_file} = document -> Document.status(document)
+        _ -> socket.assigns.disk_status
+      end
 
     {:noreply, assign(socket, :disk_status, status)}
   end
@@ -142,6 +306,76 @@ defmodule ElixirCanvasWeb.CanvasLive do
     end
   end
 
+  defp load_selected(socket, %{"mode" => mode, "filename" => filename, "bytes" => bytes})
+       when mode in ["browser_file", "save_copy"] and is_binary(filename) and filename != "" and
+              is_binary(bytes) do
+    persistence = if mode == "browser_file", do: :browser_file, else: :save_copy
+
+    case Document.open_selected(filename, bytes, persistence) do
+      {:ok, document} ->
+        socket = put_document(socket, document)
+
+        {:reply,
+         %{ok: true, generation: socket.assigns.generation, revision: revision_hex(document)},
+         socket}
+
+      {:error, reason} ->
+        {:reply, %{ok: false}, assign(socket, error: reason, notice: nil)}
+    end
+  end
+
+  defp load_selected(socket, _params) do
+    {:reply, %{ok: false},
+     assign(socket, error: "Choose a canvas JSON file using Open.", notice: nil)}
+  end
+
+  defp save_server_document(socket) do
+    document = with_drawing_font(socket.assigns.document, socket.assigns.drawing_font)
+
+    case Document.save(document, socket.assigns.graph) do
+      {:ok, document} ->
+        {:reply, %{ok: true},
+         assign(socket,
+           document: document,
+           dirty: false,
+           disk_status: :unchanged,
+           error: nil,
+           notice: "Saved to disk"
+         )}
+
+      {:error, reason} ->
+        {:reply, %{ok: false}, assign(socket, error: reason, notice: nil)}
+    end
+  end
+
+  defp prepare_selected_save(socket) do
+    document = with_drawing_font(socket.assigns.document, socket.assigns.drawing_font)
+
+    case Document.prepare_save(document, socket.assigns.graph) do
+      {:ok, bytes, pending_document} ->
+        token = Base.url_encode64(:crypto.strong_rand_bytes(16), padding: false)
+        generation = socket.assigns.generation
+        pending = %{token: token, generation: generation, document: pending_document}
+
+        {:reply,
+         %{
+           ok: true,
+           token: token,
+           generation: generation,
+           bytes: bytes,
+           revision: revision_hex(socket.assigns.document),
+           saved_revision: revision_hex(pending_document),
+           mode: Atom.to_string(document.persistence),
+           filename: document.filename
+         }, assign(socket, pending_save: pending, error: nil, notice: nil)}
+
+      {:error, reason} ->
+        {:reply, %{ok: false}, assign(socket, error: reason, notice: nil)}
+    end
+  end
+
+  defp revision_hex(document), do: Base.encode16(document.revision, case: :lower)
+
   defp load_document(socket, path) do
     case Document.open(path) do
       {:ok, document} ->
@@ -156,7 +390,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
     assign(socket,
       document: document,
       graph: document.graph,
-      path_input: document.path,
+      path_input: document.path || socket.assigns.path_input,
       drawing_font: Document.drawing_font(document),
       dirty: false,
       disk_status: :unchanged,
@@ -164,7 +398,9 @@ defmodule ElixirCanvasWeb.CanvasLive do
       notice: nil,
       file_menu_open: false,
       style_open: false,
-      generation: socket.assigns.generation + 1
+      generation: socket.assigns.generation + 1,
+      edit_version: socket.assigns.edit_version + 1,
+      pending_save: nil
     )
   end
 
@@ -183,6 +419,8 @@ defmodule ElixirCanvasWeb.CanvasLive do
       disk_status == :unavailable -> "File unavailable"
       dirty -> "Unsaved changes"
       notice -> notice
+      document && document.persistence == :save_copy -> "Opened copy"
+      document && document.persistence == :browser_file -> "Selected file open"
       document -> "Saved locally"
       true -> "No file open"
     end
@@ -224,9 +462,26 @@ defmodule ElixirCanvasWeb.CanvasLive do
       phx-hook="Workspace"
       data-dirty={to_string(@dirty)}
       data-drawing-font={@drawing_font}
+      data-file-mode={if @document, do: Atom.to_string(@document.persistence), else: "none"}
+      data-file-name={if @document, do: @document.filename, else: ""}
+      data-generation={@generation}
+      data-edit-version={@edit_version}
+      data-file-busy={to_string(@pending_save != nil)}
       data-style-open={to_string(@style_open)}
       data-font-state="loading"
     >
+      <input
+        id="canvas-file-input"
+        class="sr-only"
+        type="file"
+        accept=".json,application/json"
+        aria-label="Canvas JSON file"
+        tabindex="-1"
+        phx-update="ignore"
+      />
+      <p :if={@document && @document.persistence == :save_copy} id="save-copy-help" class="sr-only">
+        Downloads a JSON copy. The original file is not changed, and unsaved changes remain until you reload.
+      </p>
       <section :if={@document} class="canvas-area" aria-label="Canvas workspace">
         <.canvas
           id={"board-#{@generation}"}
@@ -256,7 +511,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
           >
             <.glyph name="file" />
             <span class="document-name">
-              {if @document, do: Path.basename(@document.path), else: "Open a canvas"}
+              {if @document, do: @document.filename, else: "Open a canvas"}
             </span>
             <.glyph name="chevron" />
           </button>
@@ -274,10 +529,17 @@ defmodule ElixirCanvasWeb.CanvasLive do
             id="save-file"
             class="save-button"
             phx-click={JS.dispatch("canvas:save", to: "#workspace")}
-            disabled={!@document}
-            title="Save (⌘S / Ctrl+S)"
+            disabled={!@document || @pending_save != nil}
+            title={
+              if @document && @document.persistence == :save_copy,
+                do: "Download a copy (⌘S / Ctrl+S); the original file is not changed",
+                else: "Save (⌘S / Ctrl+S)"
+            }
+            aria-describedby={@document && @document.persistence == :save_copy && "save-copy-help"}
           >
-            <.glyph name="save" /><span>Save</span>
+            <.glyph name="save" /><span>
+              {if @document && @document.persistence == :save_copy, do: "Save copy", else: "Save"}
+            </span>
           </button>
         </div>
       </header>
@@ -302,10 +564,35 @@ defmodule ElixirCanvasWeb.CanvasLive do
         phx-click-away="close-file-menu"
       >
         <h2 class="menu-heading">Your canvas, your file.</h2>
-        <p :if={@document} class="file-location" title={@document.path}>{@document.path}</p>
+        <p :if={@document && @document.path} class="file-location" title={@document.path}>
+          {@document.path}
+        </p>
+        <p :if={@document && !@document.path} id="selected-file-help" class="menu-footnote">
+          {if @document.persistence == :browser_file,
+            do: "Selected on this device. Save writes this file; Reload reads it again.",
+            else:
+              "Opened as a copy. Save copy downloads JSON; it cannot overwrite the original. Reload asks you to select this file again."}
+        </p>
         <div class="menu-section">
+          <button
+            id="open-native-file"
+            type="button"
+            class="menu-button native-open-button"
+            phx-click={JS.dispatch("canvas:open", to: "#workspace")}
+            disabled={@pending_save != nil}
+            aria-describedby="native-open-help"
+          >
+            <.glyph name="file" />Open…
+          </button>
+          <p id="native-open-help" class="menu-footnote">
+            Choose a canvas JSON file from your device.
+          </p>
+        </div>
+        <details id="server-file-options" class="menu-section server-file-options">
+          <summary>Advanced: server file path</summary>
+          <p class="menu-footnote">For files on the computer running this app.</p>
           <form id="open-file-form" class="file-form" phx-submit="open">
-            <label class="field-label" for="file-path">Open a local JSON file</label>
+            <label class="field-label" for="file-path">Open a server JSON file</label>
             <div class="file-input-row">
               <input
                 id="file-path"
@@ -315,11 +602,13 @@ defmodule ElixirCanvasWeb.CanvasLive do
                 spellcheck="false"
                 required
               />
-              <button type="submit" class="menu-button">Open</button>
+              <button type="submit" class="menu-button" disabled={@pending_save != nil}>
+                Open path
+              </button>
             </div>
           </form>
           <form id="create-file-form" class="file-form" phx-submit="create">
-            <label class="field-label" for="new-file-path">Create a new canvas</label>
+            <label class="field-label" for="new-file-path">Create a server canvas</label>
             <div class="file-input-row">
               <input
                 id="new-file-path"
@@ -329,10 +618,12 @@ defmodule ElixirCanvasWeb.CanvasLive do
                 spellcheck="false"
                 required
               />
-              <button type="submit" class="menu-button">Create</button>
+              <button type="submit" class="menu-button" disabled={@pending_save != nil}>
+                Create
+              </button>
             </div>
           </form>
-        </div>
+        </details>
         <div :if={@document} class="menu-section">
           <form id="appearance-form" phx-change="appearance">
             <label class="field-label" for="drawing-font">Default text style</label>
@@ -351,10 +642,20 @@ defmodule ElixirCanvasWeb.CanvasLive do
           <button
             id="reload-file"
             class="menu-button reload-button"
-            phx-click="reload"
-            data-confirm={@dirty && "Discard unsaved canvas edits and reload the file from disk?"}
+            phx-click={
+              if @document.persistence == :server_file,
+                do: "reload",
+                else: JS.dispatch("canvas:reload", to: "#workspace")
+            }
+            disabled={@pending_save != nil}
+            data-confirm={
+              @document.persistence == :server_file && @dirty &&
+                "Discard unsaved canvas edits and reload the file from disk?"
+            }
           >
-            Reload from disk
+            {if @document.persistence == :save_copy,
+              do: "Reload: choose file again…",
+              else: "Reload from disk"}
           </button>
         </div>
         <dl class="shortcut-list">
@@ -391,6 +692,14 @@ defmodule ElixirCanvasWeb.CanvasLive do
       </section>
 
       <div class="canvas-messages">
+        <div
+          :if={@notice && @document && @document.persistence == :save_copy}
+          id="file-notice"
+          class="canvas-message warning"
+          role="status"
+        >
+          <span>{@notice}</span>
+        </div>
         <div :if={@error} id="file-error" class="canvas-message error" role="alert">
           <span>{@error}</span>
           <button class="message-dismiss" phx-click="dismiss-error" aria-label="Dismiss error">
@@ -411,8 +720,16 @@ defmodule ElixirCanvasWeb.CanvasLive do
           </span>
           <button
             class="message-action"
-            phx-click="reload"
-            data-confirm={@dirty && "Discard unsaved canvas edits and reload the file from disk?"}
+            phx-click={
+              if @document.persistence == :server_file,
+                do: "reload",
+                else: JS.dispatch("canvas:reload", to: "#workspace")
+            }
+            disabled={@pending_save != nil}
+            data-confirm={
+              @document.persistence == :server_file && @dirty &&
+                "Discard unsaved canvas edits and reload the file from disk?"
+            }
           >
             Reload file
           </button>
@@ -423,7 +740,14 @@ defmodule ElixirCanvasWeb.CanvasLive do
         <.glyph name="file" class="empty-mark" />
         <h1 class="headline-two-tone">Make room <span class="muted">for an idea.</span></h1>
         <p>Open a canvas or create a local file to begin.</p>
-        <button class="menu-button" phx-click="toggle-file-menu">Choose a file</button>
+        <button
+          id="empty-open-file"
+          type="button"
+          class="menu-button"
+          phx-click={JS.dispatch("canvas:open", to: "#workspace")}
+        >
+          Open a canvas…
+        </button>
       </section>
       <div class="style-hint" role="status">Select an object to change its style.</div>
       <p :if={@document} class="font-message" role="status">Loading drawing fonts…</p>

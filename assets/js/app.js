@@ -4,6 +4,7 @@ import {LiveSocket} from "phoenix_live_view"
 import {Hakushi} from "hakushi"
 import {mountSelfLoops} from "./self_loops"
 import {mountRotationGuides} from "./rotation_guides"
+import {mountNativeFile} from "./native_file"
 
 async function loadDrawingFonts(workspace) {
   // Resolve the host's CSS mapping, not a second document-role → family registry.
@@ -394,6 +395,7 @@ const FileCanvas = {
       return exportImage(options)
     }
     this.mountZoomControls()
+    this.mountHeaderActions(workspace)
     this.zoomKey = event => {
       if ((!event.metaKey && !event.ctrlKey) || event.altKey || event.isComposing) return
       let factor
@@ -478,12 +480,28 @@ const FileCanvas = {
       trigger,
     )
   },
+  mountHeaderActions(workspace) {
+    const actions = workspace.querySelector(".canvas-actions")
+    const download = this.canvas.root.querySelector('[data-action="export"]')
+    // Native controls retain their own pointer boundary and export handler.
+    // Reserve their rendered border boxes, not guesses about label/font widths.
+    const sync = this.el.syncHeaderActions = () => {
+      workspace.style.setProperty("--save-action-width", `${actions.getBoundingClientRect().width}px`)
+      workspace.style.setProperty("--export-action-width", `${download.getBoundingClientRect().width}px`)
+    }
+    this.headerActionsObserver = new ResizeObserver(sync)
+    this.headerActionsObserver.observe(actions)
+    this.headerActionsObserver.observe(download)
+    sync()
+  },
   destroyed() {
     window.removeEventListener("keydown", this.zoomKey, true)
     this.destroyLineTool?.()
     this.destroyRotationGuides?.()
     this.zoomObserver?.disconnect()
     this.typographyObserver?.disconnect()
+    this.headerActionsObserver?.disconnect()
+    delete this.el.syncHeaderActions
     Hakushi.destroyed.call(this)
   },
 }
@@ -495,20 +513,23 @@ const Workspace = {
       const canvas = this.activeCanvas()
       return canvas ? (canvas.fileCanvasReady ? canvas.pendingFileEdits || 0 : 1) : 0
     }
-    this.flushSave = () => {
-      if (!this.activeCanvas()) {
-        this.saveRequested = false
-      } else if (this.saveRequested && this.pending() === 0) {
-        this.saveRequested = false
-        this.pushEvent("save", {})
-      }
-    }
-    this.requestSave = () => {
-      if (!this.activeCanvas()) return
-      this.saveRequested = true
+    this.hasUnsaved = () => this.el.dataset.dirty === "true" || this.pending() > 0 ||
+      !!this.el.querySelector(".hakushi-text-editor")
+    this.flushWaiters = new Set()
+    this.flushEdits = () => {
       document.activeElement?.blur()
-      this.flushSave()
+      if (this.pending() === 0) return Promise.resolve()
+      return new Promise(resolve => this.flushWaiters.add(resolve))
     }
+    this.settled = () => {
+      if (this.pending() > 0) return
+      for (const resolve of this.flushWaiters) resolve()
+      this.flushWaiters.clear()
+    }
+    this.nativeFile = mountNativeFile(this)
+    this.requestSave = () => this.nativeFile.save()
+    this.requestOpen = () => this.nativeFile.open()
+    this.requestReload = () => this.nativeFile.reload()
     this.saveKey = event => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
         event.preventDefault()
@@ -519,24 +540,34 @@ const Workspace = {
       if (event.key === "Escape") this.pushEvent("close-overlays", {})
     }
     this.beforeUnload = event => {
-      if (this.el.dataset.dirty === "true" || this.pending() > 0 || document.querySelector(".hakushi-text-editor")) {
+      if (this.hasUnsaved() || this.el.dataset.nativeBusy === "true" || this.el.dataset.fileBusy === "true") {
         event.preventDefault()
         event.returnValue = ""
       }
     }
     this.el.addEventListener("canvas:save", this.requestSave)
-    this.el.addEventListener("canvas:settled", this.flushSave)
+    this.el.addEventListener("canvas:open", this.requestOpen)
+    this.el.addEventListener("canvas:reload", this.requestReload)
+    this.el.addEventListener("canvas:settled", this.settled)
     window.addEventListener("keydown", this.saveKey, true)
     window.addEventListener("keydown", this.closeOverlays, true)
     window.addEventListener("beforeunload", this.beforeUnload)
   },
   updated() {
     this.el.dataset.fontState = this.el.drawingFontState || "loading"
-    this.flushSave()
+    this.nativeFile.updated()
+    // LiveView may remove client-owned inline styles without resizing buttons.
+    this.activeCanvas()?.syncHeaderActions?.()
+    this.settled()
   },
   destroyed() {
+    this.nativeFile.destroyed()
+    for (const resolve of this.flushWaiters) resolve()
+    this.flushWaiters.clear()
     this.el.removeEventListener("canvas:save", this.requestSave)
-    this.el.removeEventListener("canvas:settled", this.flushSave)
+    this.el.removeEventListener("canvas:open", this.requestOpen)
+    this.el.removeEventListener("canvas:reload", this.requestReload)
+    this.el.removeEventListener("canvas:settled", this.settled)
     window.removeEventListener("keydown", this.saveKey, true)
     window.removeEventListener("keydown", this.closeOverlays, true)
     window.removeEventListener("beforeunload", this.beforeUnload)
