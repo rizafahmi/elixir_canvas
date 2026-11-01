@@ -719,4 +719,22 @@ defmodule ElixirCanvas.DocumentTest do
     assert {:error, _} = Document.create(link)
     assert {:ok, %{type: :symlink}} = File.lstat(link)
   end
+
+  test "all bundled example canvases open cleanly and round-trip through version-1 encoding" do
+    examples =
+      Path.expand("../../examples/*.json", __DIR__)
+      |> Path.wildcard()
+      |> Enum.sort()
+
+    assert examples != []
+
+    for example_path <- examples do
+      assert {:ok, document} = Document.open(example_path)
+      assert Document.drawing_font(document) in ~w(sans heading mono handwritten)
+
+      assert {:ok, encoded, prepared} = Document.prepare_save(document, document.graph)
+      assert {:ok, roundtripped, _source} = Document.decode(encoded)
+      assert roundtripped == prepared.graph
+    end
+  end
 end
