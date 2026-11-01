@@ -17,14 +17,22 @@ unless requested, not permanently prohibited directions.
   metadata retention, source identity, and server-file persistence.
 - [CanvasLive](lib/elixir_canvas_web/live/canvas_live.ex) coordinates the editor,
   document lifecycle, unsaved state, and save/reload flows.
+- [DrawingShapes](lib/elixir_canvas_web/drawing_shapes.ex) and
+  [DrawingTypography](lib/elixir_canvas_web/drawing_typography.ex) adapt Hakushi's
+  Shapes kit for unfilled Neo-Acid defaults, standalone lines, and portable font roles.
 - Hakushi owns graph operations and undo/redo; Document bridges its graph to the
   portable file contract.
 - [app.js](assets/js/app.js) integrates LiveView and Hakushi in the browser,
-  including drawing-font readiness and editor behavior.
+  including drawing-font readiness and editor behavior, alongside
+  [rotation_guides.js](assets/js/rotation_guides.js) and
+  [self_loops.js](assets/js/self_loops.js).
 - [native_file.js](assets/js/native_file.js) handles browser file selection,
   native-handle persistence, and copy-download fallbacks.
 - [tokens.css](assets/css/tokens.css) holds shared design primitives;
   [app.css](assets/css/app.css) applies workspace and drawing styles.
+- [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and
+  [LICENSE](LICENSE) define open-source contributor checks, local-server security
+  boundaries, and MIT/font licensing.
 
 ## Document and data safety
 

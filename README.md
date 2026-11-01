@@ -51,7 +51,28 @@ file locations.
 
 **Keep the server local.** It intentionally has access to local files, without
 accounts or access controls. Development and production configurations bind to
-IPv4 loopback. This is not a hosted multi-user application.
+IPv4 loopback. This is not a hosted multi-user application. See
+[SECURITY.md](SECURITY.md) for the trust boundary and file-safety controls.
+
+## Examples
+
+The [`examples/`](examples) directory includes a feature tour and structured
+brainstorming boards that you can open from the document menu (**Open…**) or
+launch directly via `CANVAS_FILE`:
+
+```sh
+CANVAS_FILE=examples/kitchensink.json mix phx.server
+```
+
+| File | Description |
+| --- | --- |
+| [`examples/welcome.json`](examples/welcome.json) | Default startup canvas |
+| [`examples/kitchensink.json`](examples/kitchensink.json) | Interactive tour of all shape kinds, named colors, stroke styles, typography roles, rotations, standalone lines, edge paths, self-loops, and locked objects |
+| [`examples/livestream_ideas.json`](examples/livestream_ideas.json) · [`_example.json`](examples/livestream_ideas_example.json) | **Collision Lab** — blank template and worked example for mashing specific constraints with general topics |
+| [`examples/tree_and_twist.json`](examples/tree_and_twist.json) · [`_example.json`](examples/tree_and_twist_example.json) | **Tree & Twist** — blank template and worked example for four-branch decomposition plus constraint twists |
+| [`examples/worst_idea.json`](examples/worst_idea.json) · [`_example.json`](examples/worst_idea_example.json) | **Worst Idea First** — blank template and worked example for inverting deliberately terrible ideas into strong ones |
+| [`examples/wrong_genre.json`](examples/wrong_genre.json) · [`_example.json`](examples/wrong_genre_example.json) | **Wrong Genre Only** — blank template and worked example pairing utility software with game mechanics |
+| [`examples/ideas.json`](examples/ideas.json) · [`examples/board.json`](examples/board.json) | Minimal starter boards |
 
 ## Interface
 
@@ -284,16 +305,17 @@ history are session state and are not part of the file.
 mix format --check-formatted
 mix compile --warnings-as-errors
 mix test
-node --check assets/js/app.js
+node --check assets/js/app.js assets/js/native_file.js assets/js/rotation_guides.js assets/js/self_loops.js
 mix assets.build
 ```
 
-The permanent tests cover file round-trips, external changes, competing app saves,
-metadata retention, document lettering, deletion, relocation, malformed documents,
-stable IDs, permissions, and refusing to overwrite existing files. Selected-file
-consumer tests also cover validated content loading, server-path isolation,
-prepared-save metadata, snapshot acknowledgements with newer edits, copy-download
-dirty state, and stale reload/save rejection.
+The permanent tests cover file round-trips, bundled `examples/*.json` schema and
+round-trip validation, external changes, competing app saves, metadata retention,
+document lettering, deletion, relocation, malformed documents, stable IDs,
+permissions, and refusing to overwrite existing files. Selected-file consumer
+tests also cover validated content loading, server-path isolation, prepared-save
+metadata, snapshot acknowledgements with newer edits, copy-download dirty state,
+and stale reload/save rejection.
 
 ### Manual browser verification
 
@@ -350,3 +372,12 @@ silence the warning.
 
 Freehand drawing, external Markdown notes, attachments, cloud storage, multiplayer,
 agent APIs, and automatic conflict merging are outside this initial slice.
+
+## Contributing and license
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, architecture
+invariants, and pull request checks, and [SECURITY.md](SECURITY.md) for the
+local-server security policy.
+
+Released under the [MIT License](LICENSE). Bundled fonts are distributed under
+their upstream [SIL Open Font Licenses](LICENSE).
