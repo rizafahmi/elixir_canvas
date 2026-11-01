@@ -1,4 +1,11 @@
 defmodule ElixirCanvasWeb.CanvasLive do
+  @moduledoc """
+  LiveView workspace for editing local version-1 JSON canvases.
+
+  Coordinates Hakushi graph operations, portable drawing typography and color
+  roles, dirty/conflict tracking, and persistence across server file paths,
+  browser File System Access handles, and copy-download fallbacks.
+  """
   use ElixirCanvasWeb, :live_view
 
   import Hakushi.Components
@@ -388,6 +395,7 @@ defmodule ElixirCanvasWeb.CanvasLive do
 
   defp put_document(socket, document) do
     assign(socket,
+      page_title: document.filename,
       document: document,
       graph: document.graph,
       path_input: document.path || socket.assigns.path_input,
@@ -537,7 +545,8 @@ defmodule ElixirCanvasWeb.CanvasLive do
             }
             aria-describedby={@document && @document.persistence == :save_copy && "save-copy-help"}
           >
-            <.glyph name="save" /><span>
+            <.glyph name="save" />
+            <span>
               {if @document && @document.persistence == :save_copy, do: "Save copy", else: "Save"}
             </span>
           </button>

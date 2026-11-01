@@ -51,6 +51,7 @@ defmodule ElixirCanvasWeb.CanvasLiveTest do
 
     assert accepted == generation + 1
     assert revision == Base.encode16(:crypto.hash(:sha256, bytes), case: :lower)
+    assert page_title(view) == "chosen.canvas.json"
     assert has_element?(view, "#workspace[data-file-mode=browser_file][data-dirty=false]")
 
     assert has_element?(
