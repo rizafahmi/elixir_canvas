@@ -1,15 +1,24 @@
 defmodule ElixirCanvas.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/rizafahmi/elixir_canvas"
+  @version "0.1.0"
+
   def project do
     [
       app: :elixir_canvas,
-      version: "0.1.0",
+      version: @version,
+      name: "Elixir Canvas",
+      description:
+        "A local-file-first spatial thinking canvas built with Elixir, Phoenix LiveView, and Hakushi. The JSON file is the document.",
+      source_url: @source_url,
+      homepage_url: @source_url,
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      package: package(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader]
     ]
@@ -70,6 +79,30 @@ defmodule ElixirCanvas.MixProject do
         "phx.digest"
       ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => @source_url,
+        "Design System" => "#{@source_url}/blob/main/DESIGN.md"
+      },
+      keywords: [
+        "elixir",
+        "phoenix",
+        "liveview",
+        "hakushi",
+        "canvas",
+        "spatial-thinking",
+        "whiteboard",
+        "diagramming",
+        "local-first",
+        "json",
+        "mindmap",
+        "neo-acid"
+      ]
     ]
   end
 end

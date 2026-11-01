@@ -1,9 +1,12 @@
 defmodule ElixirCanvas do
   @moduledoc """
-  ElixirCanvas keeps the contexts that define your domain
-  and business logic.
+  A local-file-first spatial thinking canvas built with Elixir, Phoenix LiveView,
+  and Hakushi.
 
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
+  Version-1 JSON files on disk are the canonical documents rather than database
+  exports. `ElixirCanvas.Document` owns schema validation, unknown-metadata
+  retention, and optimistic file persistence; `ElixirCanvasWeb.CanvasLive`
+  coordinates the interactive workspace across server files, browser File System
+  Access handles, and downloaded copies.
   """
 end
