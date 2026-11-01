@@ -142,6 +142,27 @@
       "width": 25.6,
       "x": 1000,
       "y": -259.7
+    },
+    {
+      "data": {
+        "align": "left",
+        "dash": false,
+        "fill": "none",
+        "kind": "text",
+        "radius": 0,
+        "rotation": 0,
+        "size": "m",
+        "stroke": "none",
+        "text": "New idea",
+        "width": 2
+      },
+      "height": 40,
+      "id": "7folplic",
+      "locked": false,
+      "type": "shape",
+      "width": 180,
+      "x": 488.6,
+      "y": -149.9
     }
   ],
   "paper": {
