@@ -1,6 +1,10 @@
 const openError = "Save or reload this canvas before opening another file."
 const conflictError = "File changed on disk. Reload before saving; your canvas edits are still here."
 
+const supportsWritableHandle = handle => handle &&
+  ["getFile", "createWritable", "queryPermission", "requestPermission"]
+    .every(method => typeof handle[method] === "function")
+
 async function readSelectedFile(file) {
   // Keep the exact UTF-8 bytes, including a BOM, for Document.decode and its revision.
   // File.text() would silently replace malformed UTF-8 before server validation.
@@ -36,6 +40,9 @@ export function mountNativeFile(workspace) {
   const generation = () => Number(root.dataset.generation)
   const editVersion = () => Number(root.dataset.editVersion)
   const mode = () => root.dataset.fileMode
+  const supportsDirectSave = window.isSecureContext &&
+    typeof window.showOpenFilePicker === "function" &&
+    supportsWritableHandle(window.FileSystemFileHandle?.prototype)
   let selectedFile = null
   let pickerRequest = null
   let busy = false
@@ -48,6 +55,11 @@ export function mountNativeFile(workspace) {
   const syncButtons = () => {
     const disabled = busy || root.dataset.fileBusy === "true"
     root.dataset.nativeBusy = String(busy)
+    for (const help of root.querySelectorAll("[data-native-open-help]")) {
+      help.textContent = supportsDirectSave
+        ? "Choose a canvas JSON file. With your permission, Save writes back to that file while this tab stays open."
+        : "This browser cannot save back to a selected file. Open a canvas JSON file, then Save copy downloads JSON without changing the original."
+    }
     for (const button of root.querySelectorAll("#save-file, #open-native-file, #empty-open-file, #reload-file, #server-file-options button, #disk-warning .message-action")) {
       button.disabled = disabled || button.id === "save-file" && mode() === "none"
     }
@@ -75,7 +87,7 @@ export function mountNativeFile(workspace) {
       reportError("Canvas changed while the file was being read. Reload again to discard those edits.", request)
       return
     }
-    const fileMode = handle && typeof handle.createWritable === "function" ? "browser_file" : "save_copy"
+    const fileMode = supportsDirectSave && supportsWritableHandle(handle) ? "browser_file" : "save_copy"
     const writeGranted = fileMode === "browser_file" &&
       await handle.queryPermission({mode: "readwrite"}) === "granted"
     if (!isCurrent(request) || !reloading && workspace.hasUnsaved()) {
@@ -159,7 +171,7 @@ export function mountNativeFile(workspace) {
           finishPicker(request)
         }
       })()
-    } else if (action === "open" && window.isSecureContext && typeof window.showOpenFilePicker === "function") {
+    } else if (action === "open" && supportsDirectSave) {
       // This call must stay in the original click/keyboard gesture, before any await.
       let picker
       try {
@@ -290,6 +302,8 @@ export function mountNativeFile(workspace) {
       setBusy(false)
     }
   }
+
+  syncButtons()
 
   return {
     open: () => open("open"),

@@ -90,13 +90,20 @@ pending text commits remain unsaved.
 On supporting browsers in a secure context (including localhost), the browser's
 File System Access handle lets **Save** write the selected file after permission
 is granted, and **Reload from disk** reads that handle again. Handles belong to
-the current tab; a page/session restart requires opening the file again. Safari,
-Firefox, and other browsers without this picker API use a genuine file-input
-picker instead. This opens a copy: **Save copy** downloads JSON, shows
+the current tab; a page/session restart requires opening the file again. Direct
+saving requires the native picker plus file-handle read, write, and permission
+methods; the document menu explains the available behavior before opening.
+Safari, Firefox, and browsers with missing or incomplete support use a genuine
+file-input picker instead. This opens a copy: **Save copy** downloads JSON, shows
 “Copy downloaded; original file not changed”, and keeps unsaved edits marked
 dirty because the app cannot confirm where you saved the download. **Reload:
 choose file again…** asks you to reselect the original file; it does not pretend
 an in-memory snapshot is fresh disk content.
+
+Browser automation exercises real file-input selection and downloaded JSON.
+Direct-write automation can exercise genuine origin-private file handles, but
+does not verify the operating-system picker or its visible permission prompts;
+those require a manual check in a supporting browser.
 
 **Advanced: server file path** retains the explicit server-local workflow. Its
 source-path field opens existing files on the machine running Phoenix. The

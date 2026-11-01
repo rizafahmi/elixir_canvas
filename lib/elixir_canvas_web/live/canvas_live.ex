@@ -584,8 +584,8 @@ defmodule ElixirCanvasWeb.CanvasLive do
           >
             <.glyph name="file" />Open…
           </button>
-          <p id="native-open-help" class="menu-footnote">
-            Choose a canvas JSON file from your device.
+          <p id="native-open-help" class="menu-footnote" data-native-open-help>
+            Choose a canvas JSON file. Supported browsers can save back with your permission; other browsers download a copy.
           </p>
         </div>
         <details id="server-file-options" class="menu-section server-file-options">
@@ -745,9 +745,13 @@ defmodule ElixirCanvasWeb.CanvasLive do
           type="button"
           class="menu-button"
           phx-click={JS.dispatch("canvas:open", to: "#workspace")}
+          aria-describedby="empty-native-open-help"
         >
           Open a canvas…
         </button>
+        <p id="empty-native-open-help" data-native-open-help>
+          Supported browsers can save back with your permission; other browsers download a copy.
+        </p>
       </section>
       <div class="style-hint" role="status">Select an object to change its style.</div>
       <p :if={@document} class="font-message" role="status">Loading drawing fonts…</p>
